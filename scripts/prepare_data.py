@@ -60,7 +60,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dataset", default="tomato",
-                    choices=["tomato", "maize", "potato", "apple", "grape", "plantdoc"])
+                    choices=["tomato", "maize", "potato", "apple", "grape", "strawberry",
+                             "peach", "cherry", "pepper", "plantdoc"])
     ap.add_argument("--clone", action="store_true",
                     help="git clone the source dataset if it is not already present")
     ap.add_argument("--seed", type=int, default=42)

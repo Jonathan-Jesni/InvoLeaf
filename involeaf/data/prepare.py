@@ -30,12 +30,21 @@ from involeaf.utils.paths import to_portable
 
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".JPG", ".JPEG", ".PNG"}
 
+# PlantVillage crops. Note which of AgriTL-ViT's datasets are reachable from here:
+# tomato and maize are their two main crops; apple and grape are their cross-dataset
+# tests; potato and strawberry are their region-shift tests. Their third main crop,
+# Rice (11,810 images / 9 classes), is NOT in PlantVillage -- PlantVillage covers 14
+# crops and rice is not one of them, so it would need a separate Kaggle source.
 CROP_PREFIXES = {
     "tomato": "Tomato___",
     "maize": "Corn_(maize)___",
     "potato": "Potato___",
     "apple": "Apple___",
     "grape": "Grape___",
+    "strawberry": "Strawberry___",
+    "peach": "Peach___",
+    "cherry": "Cherry_(including_sour)___",
+    "pepper": "Pepper,_bell___",
 }
 
 # PlantDoc folder names -> PlantVillage class names, for the cross-domain test. Only
