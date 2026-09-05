@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# Downloaded datasets. Anchored with a leading slash so these match ONLY the
+# repository root - a bare `data/` also matches involeaf/data/ and would silently
+# exclude the data module from the repository.
+/data/
+/datasets/
+*.pth
+*.pt
+*.ckpt
+results/*
+!results/.gitkeep
+runs/
+wandb/
+*.log
+
+# splits/ is intentionally NOT ignored - fixed splits are committed
+.pytest_cache/

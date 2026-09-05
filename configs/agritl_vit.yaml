@@ -1,0 +1,10 @@
+# Reproduction of AgriTL-ViT (ESWA 2025). Module wiring is an interpretation of the
+# paper's prose; see involeaf/models/agritl_vit.py for the documented assumptions.
+_base_: base.yaml
+name: agritl_vit
+arch: agritl_vit
+backbone: vit_base_patch16_224.augreg_in21k_ft_in1k
+dual_attention: true
+resnet_module: true
+dropout: 0.1
+batch_size: 8          # dual attention roughly doubles activation memory

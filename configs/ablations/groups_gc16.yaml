@@ -1,0 +1,3 @@
+_base_: ../involeaf_b16.yaml
+name: abl_groups_gc16
+group_channels: 16

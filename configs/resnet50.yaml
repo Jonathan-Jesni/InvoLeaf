@@ -1,0 +1,5 @@
+_base_: base.yaml
+name: resnet50
+arch: timm
+backbone: resnet50.a1_in1k
+batch_size: 32

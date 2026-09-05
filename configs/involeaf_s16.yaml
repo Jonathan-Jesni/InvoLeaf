@@ -1,0 +1,17 @@
+# ViT-S/16 sweep model. ~3x faster than ViT-B, used to explore the ablation grid; the
+# winning configuration is then confirmed on ViT-B/16.
+_base_: base.yaml
+name: involeaf_s16
+arch: involeaf
+backbone: vit_small_patch16_224.augreg_in21k_ft_in1k
+variant: inv_ffn
+inv_blocks: all
+kernel_size: 7
+group_channels: 16
+reduction_ratio: 4
+norm_layer: gn
+impl: shift
+delta_init: true
+ffn_ratio: 2.0
+ffn_init: slice
+batch_size: 32

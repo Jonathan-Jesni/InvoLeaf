@@ -1,0 +1,4 @@
+# Control for the delta initialisation: random init inside a pretrained encoder.
+_base_: ../involeaf_b16.yaml
+name: abl_no_delta_init
+delta_init: false

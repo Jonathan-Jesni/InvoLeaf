@@ -1,0 +1,7 @@
+# The paper's own "Modified ResNet" variant - their ResNet module without dual MHSA.
+_base_: base.yaml
+name: agritl_vit_resnet_only
+arch: agritl_vit
+backbone: vit_base_patch16_224.augreg_in21k_ft_in1k
+dual_attention: false
+resnet_module: true

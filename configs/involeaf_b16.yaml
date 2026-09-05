@@ -1,0 +1,19 @@
+# PRIMARY MODEL.
+# x + FFN_r2(Involution(norm2(x))) in every block: involution supplies the spatial
+# mixing AgriTL-ViT's module promised but could not deliver, while a narrowed FFN keeps
+# channel mixing. ~64.7M params against the 85.8M ViT-B/16 baseline (-24.6%).
+_base_: base.yaml
+name: involeaf_b16
+arch: involeaf
+backbone: vit_base_patch16_224.augreg_in21k_ft_in1k
+variant: inv_ffn
+inv_blocks: all
+kernel_size: 7
+group_channels: 16     # paper Table 6b sweet spot
+reduction_ratio: 4
+norm_layer: gn         # GroupNorm, not BatchNorm - batch 8-16 inside a LayerNorm net
+impl: shift            # memory-efficient path; unfold OOMs at 12 blocks on 8 GB
+delta_init: true       # start as an exact spatial identity
+ffn_ratio: 2.0
+ffn_init: slice        # seed the narrowed FFN from the pretrained wide one
+cls_mode: identity

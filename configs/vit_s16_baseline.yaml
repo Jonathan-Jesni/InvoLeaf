@@ -1,0 +1,5 @@
+_base_: base.yaml
+name: vit_s16_baseline
+arch: timm
+backbone: vit_small_patch16_224.augreg_in21k_ft_in1k
+batch_size: 32

@@ -1,0 +1,3 @@
+_base_: ../involeaf_b16.yaml
+name: abl_placement_every3
+inv_blocks: every3

@@ -1,0 +1,15 @@
+# torch / torchvision are installed per-backend (CUDA on the RTX 5050, ROCm on the
+# W7800). Install them first, following the selector at https://pytorch.org, then:
+#     pip install -r requirements.txt
+timm>=1.0.0
+numpy
+pandas
+scikit-learn
+matplotlib
+pyyaml
+tqdm
+pillow
+fvcore          # FLOP counting
+ptflops         # FLOP cross-check
+grad-cam        # Grad-CAM for the interpretability stage
+pytest

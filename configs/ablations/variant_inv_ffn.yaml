@@ -1,0 +1,3 @@
+_base_: ../involeaf_b16.yaml
+name: abl_variant_inv_ffn
+variant: inv_ffn

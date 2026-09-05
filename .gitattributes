@@ -1,0 +1,5 @@
+# Normalise line endings: authored on Windows, run on a Linux cloud notebook.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pth binary

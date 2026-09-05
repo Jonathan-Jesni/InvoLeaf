@@ -1,0 +1,33 @@
+# Shared defaults. Every model config inherits this via `_base_: base.yaml`.
+
+split_file: splits/plantvillage_tomato.json
+image_size: 224
+workers: 4
+seed: 42
+
+# --- optimisation -----------------------------------------------------------------
+epochs: 20
+warmup_epochs: 2
+label_smoothing: 0.1
+grad_clip: 1.0
+weight_decay: 0.05
+min_lr_factor: 0.01
+
+# Layer-wise learning rates. Modules created by surgery are randomly initialised inside
+# a pretrained encoder, so they need a higher rate than the pretrained blocks; the head
+# is entirely new and needs higher still.
+lr: 1.0e-4            # newly introduced modules (involution, replacement FFN)
+lr_backbone: 1.0e-5   # pretrained encoder blocks
+lr_head: 1.0e-3       # classifier
+
+# --- batching ---------------------------------------------------------------------
+# effective_batch is the hyperparameter and is held constant across machines.
+# batch_size is a memory detail: 16 on the 8 GB RTX 5050, 64 on the 32 GB W7800.
+# accum_steps = effective_batch / batch_size is derived, never set by hand.
+effective_batch: 64
+batch_size: 16
+
+device: auto
+amp: auto             # bfloat16 where supported - no GradScaler, safer on RDNA3
+pretrained: true
+checkpoint_dir: results/checkpoints
