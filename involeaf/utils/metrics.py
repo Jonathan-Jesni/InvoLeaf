@@ -65,9 +65,22 @@ def compute_metrics(
             f"support sums to {total_support} but there are {len(y_true)} samples"
         )
 
+    # Average over the fixed label set rather than letting sklearn infer it. On the
+    # cross-domain split some classes have zero support (PlantDoc has no Target_Spot
+    # folder), and an inferred label set would include such a class only when the model
+    # happened to predict it - making macro-F1 depend on the model's guesses rather than
+    # on the data. macro_f1_present is the honest figure to quote there: it averages
+    # only over classes the evaluation set actually contains.
+    present = support > 0
+    macro_f1 = float(f1.mean())
+    macro_f1_present = float(f1[present].mean()) if present.any() else 0.0
+
     return {
         "accuracy": float(accuracy_score(y_true, y_pred)),
-        "macro_f1": float(f1_score(y_true, y_pred, average="macro", zero_division=0)),
+        "macro_f1": macro_f1,
+        "macro_f1_present": macro_f1_present,
+        "classes_present": int(present.sum()),
+        "classes_total": len(class_names),
         "weighted_f1": float(
             f1_score(y_true, y_pred, average="weighted", zero_division=0)
         ),
