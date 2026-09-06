@@ -36,23 +36,90 @@ SOURCES = {
 }
 
 
+# PlantDoc contains filenames with "?" in them, e.g.
+#     test/Bell_pepper leaf/IMG_1629.JPG?1507122477.jpg
+# "?" is illegal in NTFS, so a full checkout aborts on Windows with
+# "invalid path ... unable to checkout working tree", leaving a repository with all
+# its objects but an empty working tree. We check out only the directories the class
+# mapping actually uses, which excludes every offending file. On Linux this is simply
+# a smaller checkout.
+# Restricting via `git sparse-checkout set --no-cone` does not work here: its patterns
+# are gitignore-style and a directory pattern does not pull in that directory's files,
+# so the restriction is silently ignored and the bad paths are attempted anyway. An
+# explicit checkout pathspec does have the matching semantics we want.
+CHECKOUT_PATHS = {
+    "plantdoc": ["train/Tomato*", "test/Tomato*"],
+}
+
+
+def _has_worktree(dest: Path) -> bool:
+    """True when a clone has real content, not just a .git directory."""
+    if not dest.is_dir():
+        return False
+    return any(p.is_dir() and p.name != ".git" for p in dest.iterdir())
+
+
+def _checkout(dest: Path, key: str) -> None:
+    """Populate the working tree, restricted to the paths we need."""
+    paths = CHECKOUT_PATHS.get(key)
+
+    # A previous run may have left sparse-checkout enabled, which would filter this
+    # checkout as well. Clearing it is harmless when it was never turned on.
+    subprocess.run(
+        ["git", "-C", str(dest), "sparse-checkout", "disable"],
+        capture_output=True, text=True,
+    )
+
+    if paths:
+        log.info(f"{key}: checking out only {' '.join(paths)}")
+        cmd = ["git", "-C", str(dest), "checkout", "HEAD", "--", *paths]
+    else:
+        cmd = ["git", "-C", str(dest), "checkout"]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        # Individual unwritable filenames are survivable; an empty tree is not.
+        log.info(f"{key}: checkout reported errors, continuing with what was written")
+        for line in result.stderr.strip().splitlines()[:5]:
+            log.info(f"  {line}")
+
+    if not _has_worktree(dest):
+        raise SystemExit(
+            f"{key}: checkout produced no files at {dest}.\n"
+            f"Check it out manually to see what git reports:\n"
+            f'    git -C "{dest}" checkout HEAD -- '
+            f"{' '.join(paths or [])}".rstrip()
+        )
+
+
 def ensure_clone(key: str, clone: bool) -> Path:
     url, rel = SOURCES[key]
     dest = REPO / rel
-    if dest.is_dir():
+
+    if _has_worktree(dest):
         log.info(f"{key}: found at {dest}")
         return dest
+
+    if (dest / ".git").is_dir():
+        # A previous run downloaded the objects but failed to check them out.
+        log.info(f"{key}: found an incomplete clone at {dest}, repairing it")
+        _checkout(dest, key)
+        return dest
+
     if not clone:
         raise SystemExit(
             f"{key} is not present at {dest}.\n"
             f"Run with --clone, or clone it yourself:\n"
             f"    git clone --depth 1 {url} {rel}"
         )
+
     dest.parent.mkdir(parents=True, exist_ok=True)
     log.info(f"{key}: cloning {url} -> {dest} (this is large; --depth 1 is used)")
     subprocess.run(
-        ["git", "clone", "--depth", "1", url, str(dest)], check=True, cwd=REPO
+        ["git", "clone", "--depth", "1", "--no-checkout", url, str(dest)],
+        check=True, cwd=REPO,
     )
+    _checkout(dest, key)
     return dest
 
 
