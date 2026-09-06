@@ -48,10 +48,16 @@ class RunLogger:
     def log_epoch(self, epoch: int, **metrics: Any) -> None:
         row = {"epoch": epoch, **metrics}
         self.record["epochs"].append(row)
-        pretty = "  ".join(
-            f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}"
-            for k, v in metrics.items()
-        )
+        # Learning rates are small enough that %.4f renders them as 0.0000, which hides
+        # whether warmup is still ramping. Anything below 1e-3 goes to scientific.
+        def fmt(value):
+            if not isinstance(value, float):
+                return str(value)
+            if value != 0.0 and abs(value) < 1e-3:
+                return f"{value:.2e}"
+            return f"{value:.4f}"
+
+        pretty = "  ".join(f"{k}={fmt(v)}" for k, v in metrics.items())
         self.log.info(f"[{self.run_name}] epoch {epoch:>3}  {pretty}")
 
     def set(self, key: str, value: Any) -> None:
