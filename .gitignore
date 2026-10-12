@@ -13,8 +13,12 @@ env/
 *.pth
 *.pt
 *.ckpt
+# Result JSONs ARE committed: three people train on three separate cloud instances
+# and merging those files is the only way make_tables.py can see every run. They are
+# small and text. Checkpoints (~350MB each), logs, and generated tables stay out.
 results/*
 !results/.gitkeep
+!results/*.json
 runs/
 wandb/
 *.log
