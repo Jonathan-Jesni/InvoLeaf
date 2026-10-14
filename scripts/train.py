@@ -7,6 +7,11 @@
 
 Any config key can be overridden inline:
     python scripts/train.py --config configs/involeaf_b16.yaml --set kernel_size=3 batch_size=8
+
+For time-limited sessions, pause cleanly before the budget runs out and continue later:
+    python scripts/train.py --config configs/agritl_vit.yaml --resume --max-minutes 170
+
+Exit codes: 0 finished, 3 paused (resume later with --resume), anything else failed.
 """
 
 from __future__ import annotations
@@ -24,18 +29,26 @@ from involeaf.utils.logging import get_logger  # noqa: E402
 
 log = get_logger()
 
+PAUSED_EXIT = 3
+
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
-    ap.add_argument("--set", nargs="*", default=[], metavar="KEY=VALUE",
-                    help="override any config key")
+    # action="extend" so a repeated --set adds to the list instead of replacing it;
+    # otherwise "--set batch_size=64 --set kernel_size=3" silently drops batch_size.
+    ap.add_argument("--set", nargs="*", default=[], action="extend", metavar="KEY=VALUE",
+                    help="override any config key; may be repeated")
     ap.add_argument("--seeds", type=int, nargs="*", default=None,
                     help="train once per seed; final configs should use three")
     ap.add_argument("--epochs", type=int, default=None)
     ap.add_argument("--limit-batches", type=int, default=None,
                     help="smoke-test mode: stop each epoch after N batches")
+    ap.add_argument("--resume", action="store_true",
+                    help="continue from results/checkpoints/<run>.last.pth if it exists")
+    ap.add_argument("--max-minutes", type=float, default=None,
+                    help="pause cleanly after the epoch that would overrun this budget")
     args = ap.parse_args()
 
     cfg = load_config(args.config, args.set)
@@ -48,7 +61,13 @@ def main() -> None:
         cfg = dict(cfg, seed=seed)
         run_name = f"{cfg['name']}_seed{seed}"
         log.info(f"=== {run_name} ===")
-        results.append(train(cfg, run_name=run_name, limit_batches=args.limit_batches))
+        result = train(cfg, run_name=run_name, limit_batches=args.limit_batches,
+                       resume=args.resume, max_minutes=args.max_minutes)
+        if result["status"] == "paused":
+            log.info(f"{run_name} paused before epoch {result['next_epoch']} of "
+                     f"{result['epochs']}; rerun the same command with --resume")
+            sys.exit(PAUSED_EXIT)
+        results.append(result)
 
     if len(results) > 1:
         scores = [r["best_val_macro_f1"] for r in results]

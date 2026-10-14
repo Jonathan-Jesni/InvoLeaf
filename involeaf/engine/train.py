@@ -7,13 +7,28 @@ fits in VRAM. This project trains on an 8 GB RTX 5050 through September and a 32
 Radeon PRO W7800 from October; without pinning, the two halves of the experiment would
 use different effective batch sizes and could not be compared. The physical batch size
 is a memory detail, the effective batch size is a hyperparameter.
+
+Pause and resume
+----------------
+Compute arrives in fixed sessions of about three hours a day. A run that outlives its
+session would otherwise be lost and restarted from epoch 0, so after every epoch the full
+training state (model, optimiser, scheduler, scaler, epoch log and RNG streams) is written
+to ``<run>.last.pth``. With ``max_minutes`` set, a run stops cleanly after the epoch that
+would overrun the budget and returns ``status="paused"``; calling ``train`` again with
+``resume=True`` continues from the next epoch.
+
+A paused run deliberately does NOT write its results JSON. The queue treats that file as
+"this run is finished", so writing it early would make a half-trained model look done.
 """
 
 from __future__ import annotations
 
 import math
+import random
+import time
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -131,7 +146,44 @@ def train_one_epoch(
     return {"train_loss": loss_meter.avg, "train_acc": acc_meter.avg}
 
 
-def train(cfg: dict, run_name: str | None = None, limit_batches: int | None = None) -> dict:
+def _rng_state() -> dict:
+    state = {
+        "python": random.getstate(),
+        "numpy": np.random.get_state(),
+        "torch": torch.get_rng_state(),
+    }
+    if torch.cuda.is_available():
+        state["cuda"] = torch.cuda.get_rng_state_all()
+    return state
+
+
+def _set_rng_state(state: dict) -> None:
+    random.setstate(state["python"])
+    np.random.set_state(state["numpy"])
+    torch.set_rng_state(state["torch"])
+    if "cuda" in state and torch.cuda.is_available():
+        torch.cuda.set_rng_state_all(state["cuda"])
+
+
+def _atomic_save(obj, path: Path) -> None:
+    """Write to a temporary file then rename it into place.
+
+    A session killed halfway through ``torch.save`` would otherwise leave a truncated
+    checkpoint, and the next session would fail to resume from it.
+    """
+    tmp = path.with_name(path.name + ".tmp")
+    torch.save(obj, tmp)
+    tmp.replace(path)
+
+
+def train(
+    cfg: dict,
+    run_name: str | None = None,
+    limit_batches: int | None = None,
+    resume: bool = False,
+    max_minutes: float | None = None,
+) -> dict:
+    started = time.monotonic()
     seed = int(cfg.get("seed", 42))
     seed_everything(seed)
 
@@ -164,12 +216,33 @@ def train(cfg: dict, run_name: str | None = None, limit_batches: int | None = No
     ckpt_dir = Path(cfg.get("checkpoint_dir", "results/checkpoints"))
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     ckpt_path = ckpt_dir / f"{run_name}.pth"
+    last_path = ckpt_dir / f"{run_name}.last.pth"
 
-    best_metric, best_epoch = -1.0, -1
+    best_metric, best_epoch, start_epoch = -1.0, -1, 0
     epochs = int(cfg.get("epochs", 20))
-    dev.reset_peak_memory(device)
 
-    for epoch in range(epochs):
+    if resume and last_path.exists():
+        state = torch.load(last_path, map_location="cpu", weights_only=False)
+        model.load_state_dict(state["model"])
+        optimizer.load_state_dict(state["optimizer"])   # moves state onto the params' device
+        scheduler.load_state_dict(state["scheduler"])
+        if scaler is not None and state.get("scaler") is not None:
+            scaler.load_state_dict(state["scaler"])
+        start_epoch = state["epoch"] + 1
+        best_metric, best_epoch = state["best_metric"], state["best_epoch"]
+        logger.record["epochs"] = state["epochs_log"]
+        logger.record["resumed_at_epochs"] = state.get("resumed_at_epochs", []) + [start_epoch]
+        _set_rng_state(state["rng"])
+        log.info(f"[{run_name}] resumed at epoch {start_epoch}/{epochs} "
+                 f"(best val macro-F1 so far {best_metric:.4f} at epoch {best_epoch})")
+    elif resume:
+        log.info(f"[{run_name}] no saved state at {last_path}, starting fresh")
+
+    dev.reset_peak_memory(device)
+    epoch_minutes: list[float] = []
+
+    for epoch in range(start_epoch, epochs):
+        epoch_started = time.monotonic()
         stats = train_one_epoch(
             model, train_loader, optimizer, scheduler, scaler, criterion,
             device, amp_dtype, accum, float(cfg.get("grad_clip", 1.0)), limit_batches,
@@ -184,11 +257,42 @@ def train(cfg: dict, run_name: str | None = None, limit_batches: int | None = No
         # is not read until the final evaluation.
         if val["macro_f1"] > best_metric:
             best_metric, best_epoch = val["macro_f1"], epoch
-            torch.save(
+            _atomic_save(
                 {"model": model.state_dict(), "cfg": cfg, "epoch": epoch,
                  "val_macro_f1": best_metric, "class_names": train_ds.class_names},
                 ckpt_path,
             )
+
+        _atomic_save(
+            {
+                "model": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "scheduler": scheduler.state_dict(),
+                "scaler": scaler.state_dict() if scaler is not None else None,
+                "epoch": epoch,
+                "best_metric": best_metric,
+                "best_epoch": best_epoch,
+                "epochs_log": logger.record["epochs"],
+                "resumed_at_epochs": logger.record.get("resumed_at_epochs", []),
+                "rng": _rng_state(),
+            },
+            last_path,
+        )
+        epoch_minutes.append((time.monotonic() - epoch_started) / 60)
+
+        # Stop before an epoch that would not finish inside the session. The slowest
+        # epoch so far plus 15% headroom is the estimate for the next one.
+        if max_minutes is not None and epoch + 1 < epochs:
+            elapsed = (time.monotonic() - started) / 60
+            if elapsed + max(epoch_minutes) * 1.15 > max_minutes:
+                log.info(
+                    f"[{run_name}] pausing after epoch {epoch} of {epochs}: "
+                    f"{elapsed:.1f} of {max_minutes:.1f} minutes used, next epoch "
+                    f"needs about {max(epoch_minutes):.1f}. Resume with --resume."
+                )
+                return {"status": "paused", "run_name": run_name,
+                        "next_epoch": epoch + 1, "epochs": epochs,
+                        "best_val_macro_f1": best_metric}
 
     logger.set("best_val_macro_f1", best_metric)
     logger.set("best_epoch", best_epoch)
@@ -196,5 +300,10 @@ def train(cfg: dict, run_name: str | None = None, limit_batches: int | None = No
     logger.set("peak_train_memory_gb", dev.peak_memory_gb(device))
     logger.save()
 
-    return {"checkpoint": str(ckpt_path), "best_val_macro_f1": best_metric,
-            "best_epoch": best_epoch, "run_name": run_name}
+    # The run is complete and its best weights are in ckpt_path; the resume state is
+    # about 1 GB for ViT-B (weights plus two AdamW moments) and no longer needed.
+    last_path.unlink(missing_ok=True)
+
+    return {"status": "complete", "checkpoint": str(ckpt_path),
+            "best_val_macro_f1": best_metric, "best_epoch": best_epoch,
+            "run_name": run_name}
