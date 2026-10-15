@@ -10,7 +10,7 @@ kernel_size: 7
 group_channels: 16
 reduction_ratio: 4
 norm_layer: gn
-impl: shift
+impl: unfold           # faster, equivalent; ViT-S is half the width of ViT-B, so far less memory
 delta_init: true
 ffn_ratio: 2.0
 ffn_init: slice

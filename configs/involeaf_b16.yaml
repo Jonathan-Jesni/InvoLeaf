@@ -12,7 +12,11 @@ kernel_size: 7
 group_channels: 16     # paper Table 6b sweet spot
 reduction_ratio: 4
 norm_layer: gn         # GroupNorm, not BatchNorm - batch 8-16 inside a LayerNorm net
-impl: shift            # memory-efficient path; unfold OOMs at 12 blocks on 8 GB
+# unfold on the 48 GB W7900: measured 624 ms/step at 32.2 GB peak, against 1,230 ms/step
+# for shift. The two are numerically equivalent (tests/test_involution.py), so this is a
+# speed choice, not a model change. Use impl=shift on cards under ~40 GB; unfold OOMs on
+# 8 GB. Seed 42 of this config was trained with shift.
+impl: unfold
 delta_init: true       # start as an exact spatial identity
 ffn_ratio: 2.0
 ffn_init: slice        # seed the narrowed FFN from the pretrained wide one
