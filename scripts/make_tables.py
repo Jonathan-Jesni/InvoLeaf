@@ -153,15 +153,22 @@ def cross_domain_table() -> str:
         name = record["config"].get("name", Path(record["checkpoint"]).stem)
         cd = record["cross_domain"]
         clean = record.get("robustness", {}).get("clean", {}).get("accuracy")
+        # PlantDoc has no Target_Spot folder, so plain macro-F1 averages in a class with
+        # zero support and understates the result. Quote F1 over the classes present.
+        present_f1 = cd.get("macro_f1_present", cd["macro_f1"])
+        classes = (f"{cd['classes_present']}/{cd['classes_total']}"
+                   if "classes_present" in cd else "-")
         rows.append([
             name,
             f"{clean:.4f}" if clean else "-",
             f"{cd['accuracy']:.4f}",
-            f"{cd['macro_f1']:.4f}",
+            f"{present_f1:.4f}",
+            classes,
             cd["n_images"],
         ])
     return _md_table(
-        ["model", "PlantVillage test", "PlantDoc (field)", "PlantDoc macro-F1", "images"],
+        ["model", "PlantVillage test", "PlantDoc (field)",
+         "PlantDoc macro-F1 (classes present)", "classes", "images"],
         rows,
     )
 
