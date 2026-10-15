@@ -135,7 +135,7 @@ def check_model_and_batch(torch, device, amp, batch_sizes: list[int], model_cfg:
     report("model builds", True, f"{cfg['name']} at {params:.2f}M parameters")
 
     opt = torch.optim.AdamW(model.parameters(), lr=1e-5)
-    largest_ok = None
+    fits: list[int] = []
     for bs in batch_sizes:
         dev.reset_peak_memory(device)
         if device.type == "cuda":
@@ -151,7 +151,7 @@ def check_model_and_batch(torch, device, amp, batch_sizes: list[int], model_cfg:
             peak = dev.peak_memory_gb(device)
             print(f"  [{OK}] batch {bs:>3} - peak {peak:.2f} GB" if peak
                   else f"  [{OK}] batch {bs:>3}")
-            largest_ok = bs
+            fits.append(bs)
             del x, y, loss
         except torch.OutOfMemoryError:
             print(f"  [ -- ] batch {bs:>3} - out of memory")
@@ -159,19 +159,32 @@ def check_model_and_batch(torch, device, amp, batch_sizes: list[int], model_cfg:
         if device.type == "cuda":
             torch.cuda.empty_cache()
 
-    report("at least one batch size fits", largest_ok is not None)
-    if largest_ok:
+    report("at least one batch size fits", bool(fits))
+    if fits:
+        # The effective batch is pinned, so the physical batch must divide it exactly.
+        # A batch LARGER than the effective batch cannot be accumulated back down - it
+        # would silently raise the effective batch and break comparability with every
+        # other run - so the largest batch that fits is not the answer when it exceeds
+        # the effective batch.
         effective = 64
-        accum = max(1, effective // largest_ok)
-        print(
-            f"\n  Recommended: batch_size={largest_ok}, which gives accum_steps="
-            f"{accum} against the pinned effective batch of {effective}."
-        )
-        if effective % largest_ok != 0:
+        usable = [bs for bs in fits if bs <= effective and effective % bs == 0]
+        if not usable:
             print(
-                f"  WARNING: {largest_ok} does not divide {effective} exactly. Use the "
-                f"next power of two down so the effective batch stays comparable with "
-                f"runs from the other machine."
+                f"\n  WARNING: none of the batch sizes that fit ({fits}) divide the "
+                f"effective batch of {effective}. Probe smaller powers of two with "
+                f"--batch-sizes."
+            )
+            failures.append("usable batch size")
+            return
+        best = max(usable)
+        print(
+            f"\n  Recommended: batch_size={best}, accum_steps={effective // best}, "
+            f"giving the pinned effective batch of {effective}."
+        )
+        if best < max(fits):
+            print(
+                f"  (Batch {max(fits)} also fits, but going above {effective} would "
+                f"change the effective batch, so {best} is the most this run can use.)"
             )
 
 
