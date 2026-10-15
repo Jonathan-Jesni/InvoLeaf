@@ -1,0 +1,224 @@
+{
+  "run_name": "resnet50_seed42",
+  "config": {
+    "split_file": "splits/plantvillage_tomato.json",
+    "image_size": 224,
+    "workers": 4,
+    "seed": 42,
+    "epochs": 20,
+    "warmup_epochs": 2,
+    "label_smoothing": 0.1,
+    "grad_clip": 1.0,
+    "weight_decay": 0.05,
+    "min_lr_factor": 0.01,
+    "lr": 0.0001,
+    "lr_backbone": 0.0001,
+    "lr_head": 0.001,
+    "effective_batch": 64,
+    "batch_size": 64,
+    "device": "auto",
+    "amp": "auto",
+    "pretrained": true,
+    "checkpoint_dir": "results/checkpoints",
+    "name": "resnet50",
+    "arch": "timm",
+    "backbone": "resnet50.a1_in1k"
+  },
+  "device": {
+    "device": "cuda",
+    "backend": "rocm",
+    "name": "AMD Radeon Pro W7900D",
+    "total_memory_gb": 48.0,
+    "amp_dtype": "bfloat16",
+    "torch_version": "2.13.0+rocm10.0.0",
+    "platform": "Linux 6.8.0-79-generic"
+  },
+  "started_at": "2026-10-15T20:16:15",
+  "epochs": [
+    {
+      "epoch": 0,
+      "train_loss": 1.9922980714325953,
+      "train_acc": 0.3211805555555556,
+      "val_acc": 0.6422018348623854,
+      "val_macro_f1": 0.4498345654707244,
+      "lr": 0.0005025252525252525
+    },
+    {
+      "epoch": 1,
+      "train_loss": 1.016849595488924,
+      "train_acc": 0.8166824494949495,
+      "val_acc": 0.9313761467889908,
+      "val_macro_f1": 0.9030322461071429,
+      "lr": 0.001
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.6603732205400563,
+      "train_acc": 0.9495738636363636,
+      "val_acc": 0.9724770642201835,
+      "val_macro_f1": 0.9646579450007412,
+      "lr": 0.000992479837741043
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.5954894844931785,
+      "train_acc": 0.9756944444444444,
+      "val_acc": 0.9798165137614679,
+      "val_macro_f1": 0.9746888926704234,
+      "lr": 0.0009701478472890247
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.569048609998491,
+      "train_acc": 0.983270202020202,
+      "val_acc": 0.9882568807339449,
+      "val_macro_f1": 0.9855011925789121,
+      "lr": 0.0009336825748732972
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.5525713379334922,
+      "train_acc": 0.9890309343434344,
+      "val_acc": 0.9897247706422019,
+      "val_macro_f1": 0.9874862708311424,
+      "lr": 0.0008841919993438941
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.5475559261712161,
+      "train_acc": 0.9896622474747475,
+      "val_acc": 0.9911926605504587,
+      "val_macro_f1": 0.9891048752937801,
+      "lr": 0.0008231798667948369
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.5381724777245762,
+      "train_acc": 0.9928977272727273,
+      "val_acc": 0.9930275229357798,
+      "val_macro_f1": 0.9916972218879581,
+      "lr": 0.0007524999999999999
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.5352235683287033,
+      "train_acc": 0.9925820707070707,
+      "val_acc": 0.9933944954128441,
+      "val_macro_f1": 0.9919550572143079,
+      "lr": 0.0006742999709462061
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.5299270050694244,
+      "train_acc": 0.9942392676767676,
+      "val_acc": 0.9926605504587156,
+      "val_macro_f1": 0.9915146130170303,
+      "lr": 0.0005909558479451306
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.526512928984382,
+      "train_acc": 0.9955018939393939,
+      "val_acc": 0.9952293577981651,
+      "val_macro_f1": 0.9940181285551706,
+      "lr": 0.000505
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.5246384926516601,
+      "train_acc": 0.9958964646464646,
+      "val_acc": 0.9952293577981651,
+      "val_macro_f1": 0.9943559932828597,
+      "lr": 0.0004190441520548695
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.5211585097842746,
+      "train_acc": 0.9974747474747475,
+      "val_acc": 0.9941284403669725,
+      "val_macro_f1": 0.9929767176920624,
+      "lr": 0.00033570002905379407
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.5217414405008759,
+      "train_acc": 0.9967645202020202,
+      "val_acc": 0.9948623853211009,
+      "val_macro_f1": 0.9937076554378536,
+      "lr": 0.00025750000000000013
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.5206420225928529,
+      "train_acc": 0.9968434343434344,
+      "val_acc": 0.9941284403669725,
+      "val_macro_f1": 0.9926391721413479,
+      "lr": 0.00018682013320516302
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.5191049747394793,
+      "train_acc": 0.9975536616161617,
+      "val_acc": 0.9948623853211009,
+      "val_macro_f1": 0.994180704526524,
+      "lr": 0.00012580800065610596
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.518365887680439,
+      "train_acc": 0.9975536616161617,
+      "val_acc": 0.9959633027522936,
+      "val_macro_f1": 0.9950767761839726,
+      "lr": 7.631742512670284e-05
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.5181912873128448,
+      "train_acc": 0.9980271464646465,
+      "val_acc": 0.9959633027522936,
+      "val_macro_f1": 0.9950767761839726,
+      "lr": 3.9852152710975386e-05
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.5188716096107406,
+      "train_acc": 0.9970801767676768,
+      "val_acc": 0.9952293577981651,
+      "val_macro_f1": 0.9942072823167232,
+      "lr": 1.7520162258957028e-05
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.5178587800926633,
+      "train_acc": 0.9976325757575758,
+      "val_acc": 0.9944954128440368,
+      "val_macro_f1": 0.9930693370915419,
+      "lr": 1e-05
+    }
+  ],
+  "num_classes": 10,
+  "class_names": [
+    "Tomato___Bacterial_spot",
+    "Tomato___Early_blight",
+    "Tomato___Late_blight",
+    "Tomato___Leaf_Mold",
+    "Tomato___Septoria_leaf_spot",
+    "Tomato___Spider_mites Two-spotted_spider_mite",
+    "Tomato___Target_Spot",
+    "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+    "Tomato___Tomato_mosaic_virus",
+    "Tomato___healthy"
+  ],
+  "effective_batch": 64,
+  "accum_steps": 1,
+  "params_total": 23528522,
+  "model_meta": {
+    "backbone": "resnet50.a1_in1k",
+    "architecture": "baseline"
+  },
+  "best_val_macro_f1": 0.9950767761839726,
+  "best_epoch": 16,
+  "checkpoint": "results/checkpoints/resnet50_seed42.pth",
+  "peak_train_memory_gb": 3.143219470977783,
+  "finished_at": "2026-10-15T20:29:59"
+}
