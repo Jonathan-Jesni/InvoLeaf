@@ -3,3 +3,7 @@ name: resnet50
 arch: timm
 backbone: resnet50.a1_in1k
 batch_size: 32
+# CNNs fine-tune best at a higher backbone rate than ViTs. At the shared 1e-5 the first
+# seed-42 run under-fit (final train loss 0.657 against a label-smoothing floor of about
+# 0.50, plateau at 96.8% val accuracy), which would leave the CNN baseline handicapped.
+lr_backbone: 1.0e-4
