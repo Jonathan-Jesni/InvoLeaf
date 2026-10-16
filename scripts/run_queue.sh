@@ -3,28 +3,34 @@
 #
 #   SEED=42 bash scripts/run_queue.sh S C
 #
-# Run the SAME command at the start of every session. It picks up where the last
-# session stopped:
-#   - finished runs are skipped (their results/<run>.json exists),
-#   - an unfinished run resumes from its last completed epoch (<run>.last.pth),
-#   - nothing new is started once the session budget is nearly spent.
+# Run the SAME command at the start of every session. It works out what is left:
+#   - runs that are trained AND evaluated are skipped,
+#   - a run is only started if its estimated time fits in what is left of the budget;
+#     one that does not fit is deferred, and later shorter runs fill the time instead,
+#   - every run is evaluated straight after it trains, on the same machine.
 #
-# Set BUDGET_MIN to the minutes you actually have left when you start, with some
-# margin for the session cutoff. The default of 165 assumes a fresh 3-hour session.
+# Set BUDGET_MIN to the minutes you actually have left when you start, minus ~15 for
+# pushing results before the cutoff. The default of 165 assumes a fresh 3-hour session.
 #
-# Resuming needs results/checkpoints/ to survive between sessions. If your instance
-# wipes its disk at the end of a session, resuming cannot work; check this before
-# relying on it.
+# Why everything big stays on local disk
+# --------------------------------------
+# On the cloud instances /workspace is a network disk whose reads and writes stall for
+# minutes at a time under load. Saving a 1 GB resume checkpoint there froze one run for
+# 15 minutes, and one ViT-B epoch that normally takes 39 s took 22 minutes reading
+# images. So at the start of a session the images are copied to the machine's own disk
+# (LOCAL_DIR), and checkpoints are written there too. Only the small result JSONs and
+# logs go to /workspace.
+#
+# The cost is that local disk is wiped when the session ends, so a run cannot carry
+# over to the next session. That is why runs are only started when they fit: every run
+# here takes well under one session. A run that does not finish in time simply starts
+# again next session; its partial state is never trusted.
 #
 # Splitting work between people is BY SEED, not by model:
 #   person 1:  SEED=42 bash scripts/run_queue.sh S C
 #   person 2:  SEED=43 bash scripts/run_queue.sh S E
 #   person 3:  SEED=44 bash scripts/run_queue.sh S F
 # A lost seed costs error bars; a lost model would cost the whole comparison.
-#
-# Each model is evaluated right after it finishes training, on the same instance,
-# because evaluation needs the checkpoint and checkpoints (~350MB each) never leave the
-# box. Only the small result JSONs are committed and merged.
 
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
@@ -32,48 +38,106 @@ cd "$(dirname "$0")/.." || exit 1
 SEED="${SEED:-42}"
 BATCH="${BATCH:-64}"            # 48GB W7900 fits 64 for every model; check_env.py confirms
 BUDGET_MIN="${BUDGET_MIN:-165}" # minutes this session may use, with margin before cutoff
-MIN_START="${MIN_START:-15}"    # never start a training run with less than this left
-EVAL_MIN="${EVAL_MIN:-10}"      # rough cost of one robustness evaluation
+EVAL_MIN="${EVAL_MIN:-10}"      # never start an evaluation with less than this left
+LOCAL_DIR="${LOCAL_DIR:-/root/involeaf_local}"   # the machine's own (non-network) disk
+STAGE="${STAGE:-1}"             # 1 = copy images to LOCAL_DIR first; 0 = read in place
 PAUSED_EXIT=3
 
 LOGDIR="results/logs"
-mkdir -p "$LOGDIR" results/checkpoints
+CKPT_DIR="${LOCAL_DIR:?}/checkpoints"
+mkdir -p "$LOGDIR" "$CKPT_DIR"
 
 START=$(date +%s)
 STOP=0
-FAILED=(); SKIPPED=(); RAN=(); PAUSED=()
+FAILED=(); SKIPPED=(); RAN=(); PAUSED=(); DEFERRED=()
 
 remaining () {                  # whole minutes left in this session's budget
   echo $(( BUDGET_MIN - ($(date +%s) - START) / 60 ))
+}
+
+# Conservative minutes for one run INCLUDING start-up tuning and its evaluation, from
+# the timings measured on the W7900 (ResNet ~12 min, ViT-B ~14, InvoLeaf ~45 with the
+# unfold implementation). AgriTL-ViT and the variants have not been timed yet, so their
+# numbers are deliberately generous. Override one with e.g. EST_agritl_vit=30.
+estimate () {
+  local var="EST_$1"
+  if [[ -n "${!var:-}" ]]; then echo "${!var}"; return; fi
+  case "$1" in
+    resnet50)             echo 20 ;;
+    vit_b16_baseline)     echo 22 ;;
+    involeaf_b16)         echo 60 ;;
+    agritl_vit)           echo 40 ;;
+    vit_s16_baseline)     echo 15 ;;
+    abl_s16_k*)           echo 30 ;;
+    abl_variant_pure)     echo 50 ;;
+    abl_variant_parallel) echo 65 ;;
+    benchmark)            echo 15 ;;
+    *)                    echo 45 ;;
+  esac
+}
+
+stage_data () {                 # copy the images to local disk once per session
+  [[ "$STAGE" == "1" ]] || { echo ">> data   STAGE=0, reading images from ./data"; return 0; }
+  local dst="${LOCAL_DIR:?}/data"
+  if [[ -f "${dst}/.staged" ]]; then
+    echo ">> data   already on local disk (${dst})"
+  else
+    echo ">> data   copying images to local disk (${dst}), one-time per session ..."
+    rm -rf "$dst" && mkdir -p "$dst"
+    local t0; t0=$(date +%s)
+    if ( cd data && tar --exclude=.git -cf - PlantVillage-Dataset PlantDoc-Dataset ) \
+         | tar -C "$dst" -xf -; then
+      touch "${dst}/.staged"
+      echo "   copied $(find "$dst" -type f ! -name .staged | wc -l) files" \
+           "in $(( $(date +%s) - t0 ))s"
+    else
+      echo "   copy FAILED - training will read images from the network disk instead"
+      return 0
+    fi
+  fi
+  # involeaf/utils/paths.py redirects every data/ root to this copy.
+  export INVOLEAF_DATA_DIR="$dst"
 }
 
 train () {                      # train <config> <base-name> [KEY=VALUE ...]
   local cfg="$1" base="$2"; shift 2
   local name="${base}_seed${SEED}"
   [[ $STOP -eq 1 ]] && return 0
+
   if [[ -f "results/${name}.json" ]]; then
-    echo ">> skip   ${name} (finished)"; SKIPPED+=("$name"); return 0
-  fi
-  local left; left=$(remaining)
-  if (( left < MIN_START )); then
-    echo ">> stop   ${left} min left, not starting ${name}"; STOP=1; return 0
+    if [[ -f "results/eval_${name}.json" || -f "${CKPT_DIR}/${name}.pth" ]]; then
+      echo ">> skip   ${name} (finished)"; SKIPPED+=("$name"); return 0
+    fi
+    # Trained in an earlier session but never evaluated, and the checkpoint went with
+    # that session's local disk. Without retraining it would be skipped forever and
+    # never get robustness or PlantDoc numbers.
+    echo ">> redo   ${name}: trained earlier but never evaluated, and its checkpoint is gone"
+    mv "results/${name}.json" "results/${name}.json.stale"
   fi
 
-  local how="start"
-  [[ -f "results/checkpoints/${name}.last.pth" ]] && how="resume"
-  echo ">> ${how}  ${name}  ($(date +%H:%M), ${left} min left)"
+  local left need
+  left=$(remaining); need=$(estimate "$base")
+  if (( left < need )); then
+    echo ">> later  ${name}: needs ~${need} min, ${left} left - trying shorter runs"
+    DEFERRED+=("$name"); return 0
+  fi
 
-  # The run name is <name>_seed<SEED>, so --set name=<base> keeps the results file,
-  # the checkpoint and the queue's skip check all agreeing on one filename.
+  echo ">> start  ${name}  ($(date +%H:%M), ${left} min left, needs ~${need})"
+  # The run name is <base>_seed<SEED>, so --set name=<base> keeps the results file,
+  # the checkpoint and the skip check above all agreeing on one filename.
   python scripts/train.py --config "$cfg" --resume --max-minutes "$left" \
-    --set "name=${base}" "seed=${SEED}" "batch_size=${BATCH}" "$@" \
+    --set "name=${base}" "seed=${SEED}" "batch_size=${BATCH}" \
+          "checkpoint_dir=${CKPT_DIR}" "$@" \
     >> "${LOGDIR}/${name}.log" 2>&1
   local code=$?
 
   if [[ $code -eq 0 ]]; then
     echo "   done   ${name}  ($(date +%H:%M))"; RAN+=("$name")
   elif [[ $code -eq $PAUSED_EXIT ]]; then
-    echo "   paused ${name} - resumes next session"; PAUSED+=("$name"); STOP=1
+    # Only happens if a run badly overruns its estimate. Its state is on local disk,
+    # so it restarts from scratch next session.
+    echo "   paused ${name} - ran over its estimate, restarts next session"
+    PAUSED+=("$name"); STOP=1
   else
     echo "   FAILED ${name} - see ${LOGDIR}/${name}.log"
     tail -n 15 "${LOGDIR}/${name}.log" | sed 's/^/     /'
@@ -87,14 +151,13 @@ evaluate () {                   # evaluate <base-name>
   if [[ -f "results/eval_${name}.json" ]]; then
     echo ">> skip   eval ${name} (done)"; SKIPPED+=("eval:${name}"); return 0
   fi
-  # Only evaluate a finished run. The best-so-far checkpoint exists from epoch 0 on,
-  # so checking for the checkpoint alone would evaluate a half-trained model and then
-  # skip it forever after.
-  if [[ ! -f "results/${name}.json" ]]; then
-    echo ">> skip   eval ${name} (training not finished)"; return 0
-  fi
-  if [[ ! -f "results/checkpoints/${name}.pth" ]]; then
-    echo ">> skip   eval ${name} (checkpoint is not on this instance)"
+  # Only evaluate a finished run: the best-so-far checkpoint exists from epoch 0 on.
+  [[ -f "results/${name}.json" ]] || return 0
+
+  local ckpt="${CKPT_DIR}/${name}.pth"
+  [[ -f "$ckpt" ]] || ckpt="results/checkpoints/${name}.pth"   # older layout
+  if [[ ! -f "$ckpt" ]]; then
+    echo ">> skip   eval ${name} (checkpoint is not on this machine)"
     SKIPPED+=("eval:${name}"); return 0
   fi
   local left; left=$(remaining)
@@ -102,7 +165,7 @@ evaluate () {                   # evaluate <base-name>
     echo ">> stop   ${left} min left, not starting eval ${name}"; STOP=1; return 0
   fi
   echo ">> eval   ${name}  ($(date +%H:%M))"
-  if python scripts/eval_robustness.py --ckpt "results/checkpoints/${name}.pth" \
+  if python scripts/eval_robustness.py --ckpt "$ckpt" \
        > "${LOGDIR}/eval_${name}.log" 2>&1; then
     echo "   done   eval ${name}"; RAN+=("eval:${name}")
   else
@@ -112,38 +175,47 @@ evaluate () {                   # evaluate <base-name>
   fi
 }
 
+run () {                        # run <config> <base-name> [KEY=VALUE ...]: train, then eval
+  train "$@"
+  evaluate "$2"
+}
+
 # --------------------------------------------------------------------------------- #
 
 phase_S () {
-  echo "=== Phase S - four headline models at seed ${SEED}, each evaluated on finish ==="
-  train configs/resnet50.yaml          resnet50;          evaluate resnet50
-  train configs/vit_b16_baseline.yaml  vit_b16_baseline;  evaluate vit_b16_baseline
-  train configs/involeaf_b16.yaml      involeaf_b16;      evaluate involeaf_b16
-  train configs/agritl_vit.yaml        agritl_vit;        evaluate agritl_vit
+  echo "=== Phase S - four headline models at seed ${SEED} ==="
+  run configs/resnet50.yaml          resnet50
+  run configs/vit_b16_baseline.yaml  vit_b16_baseline
+  run configs/involeaf_b16.yaml      involeaf_b16
+  run configs/agritl_vit.yaml        agritl_vit
 }
 
 phase_C () {
-  echo "=== Phase C - kernel-size ablation on ViT-S/16 ============================="
-  train configs/vit_s16_baseline.yaml vit_s16_baseline
+  echo "=== Phase C - kernel-size ablation on ViT-S/16 ==="
+  # Evaluated as well as trained: clean accuracy is saturated near 100%, so whether a
+  # smaller kernel helps can only show up in the robustness and PlantDoc numbers.
+  run configs/vit_s16_baseline.yaml vit_s16_baseline
   for k in 3 5 7; do
-    train configs/involeaf_s16.yaml "abl_s16_k${k}" "kernel_size=${k}"
+    run configs/involeaf_s16.yaml "abl_s16_k${k}" "kernel_size=${k}"
   done
 }
 
 phase_E () {
-  echo "=== Phase E - variant ablation ============================================="
-  train configs/ablations/variant_pure.yaml     abl_variant_pure;     evaluate abl_variant_pure
-  train configs/ablations/variant_parallel.yaml abl_variant_parallel; evaluate abl_variant_parallel
+  echo "=== Phase E - variant ablation ==="
+  run configs/ablations/variant_pure.yaml     abl_variant_pure
+  run configs/ablations/variant_parallel.yaml abl_variant_parallel
 }
 
 phase_F () {
-  echo "=== Phase F - efficiency benchmark (one instance only) ====================="
+  echo "=== Phase F - efficiency benchmark (one machine only) ==="
   [[ $STOP -eq 1 ]] && return 0
   if [[ -f results/benchmark.json ]]; then
     echo ">> skip   benchmark (done)"; SKIPPED+=("benchmark"); return 0
   fi
-  if (( $(remaining) < MIN_START )); then
-    echo ">> stop   not enough time left for the benchmark"; STOP=1; return 0
+  local left need; left=$(remaining); need=$(estimate benchmark)
+  if (( left < need )); then
+    echo ">> later  benchmark: needs ~${need} min, ${left} left"; DEFERRED+=("benchmark")
+    return 0
   fi
   echo ">> bench  params / FLOPs / latency / memory"
   if python scripts/benchmark.py --all --train-batch "${BATCH}" \
@@ -163,16 +235,17 @@ if [[ $# -eq 0 ]]; then
 usage: SEED=<n> [BUDGET_MIN=<minutes>] bash scripts/run_queue.sh <phase> [phase...]
 
   S  four headline models at SEED, each evaluated when it finishes
-  C  ViT-S baseline + kernel-size ablation
-  E  pure / parallel variant ablation
+  C  ViT-S baseline + kernel-size ablation, each evaluated
+  E  pure / parallel variant ablation, each evaluated
   F  efficiency benchmark (one person only)
 
-Run the same command at the start of every session; it resumes where it stopped.
+Run the same command at the start of every session; it picks up what is left.
 USAGE
   exit 1
 fi
 
-echo "seed=${SEED}  batch=${BATCH}  budget=${BUDGET_MIN} min  started $(date)"
+echo "seed=${SEED}  batch=${BATCH}  budget=${BUDGET_MIN} min  local=${LOCAL_DIR}  started $(date)"
+stage_data
 
 for phase in "$@"; do
   case "$phase" in
@@ -184,17 +257,18 @@ done
 ELAPSED=$(( $(date +%s) - START ))
 echo
 echo "=== Summary ================================================================"
-printf 'elapsed  %dh%02dm of a %d min budget\n' $((ELAPSED/3600)) $(((ELAPSED%3600)/60)) "$BUDGET_MIN"
-printf 'ran      %d  %s\n' "${#RAN[@]}"     "${RAN[*]-}"
-printf 'paused   %d  %s\n' "${#PAUSED[@]}"  "${PAUSED[*]-}"
-printf 'skipped  %d  %s\n' "${#SKIPPED[@]}" "${SKIPPED[*]-}"
-printf 'failed   %d  %s\n' "${#FAILED[@]}"  "${FAILED[*]-}"
+printf 'elapsed   %dh%02dm of a %d min budget\n' $((ELAPSED/3600)) $(((ELAPSED%3600)/60)) "$BUDGET_MIN"
+printf 'ran       %d  %s\n' "${#RAN[@]}"      "${RAN[*]-}"
+printf 'deferred  %d  %s\n' "${#DEFERRED[@]}" "${DEFERRED[*]-}"
+printf 'paused    %d  %s\n' "${#PAUSED[@]}"   "${PAUSED[*]-}"
+printf 'skipped   %d  %s\n' "${#SKIPPED[@]}"  "${SKIPPED[*]-}"
+printf 'failed    %d  %s\n' "${#FAILED[@]}"   "${FAILED[*]-}"
 echo
-if [[ $STOP -eq 1 ]]; then
-  echo "Session budget reached. Next session, run exactly the same command again."
+if (( ${#DEFERRED[@]} + ${#PAUSED[@]} > 0 )); then
+  echo "Some runs did not fit this session. Next session, run exactly the same command."
 else
-  echo "Queue complete for these phases."
+  echo "Nothing left for these phases."
 fi
-echo "Push finished results now so teammates can see them:"
-echo "  git add results/*.json && git commit -m 'results: seed ${SEED}' && git push"
+echo "Push finished results now:"
+echo "  git add results/*seed${SEED}*.json && git commit -m 'results: seed ${SEED}' && git push"
 [[ ${#FAILED[@]} -eq 0 ]] || exit 1

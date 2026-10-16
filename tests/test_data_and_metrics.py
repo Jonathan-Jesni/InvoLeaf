@@ -142,6 +142,22 @@ def test_split_roots_resolve_against_the_repository(tmp_path, fake_dataset):
     assert resolve_root("data/whatever") == inside
 
 
+def test_data_roots_follow_the_local_copy(tmp_path, monkeypatch):
+    """With INVOLEAF_DATA_DIR set, data/ roots resolve to the local copy if present."""
+    from involeaf.utils.paths import DATA_DIR_ENV, REPO_ROOT, resolve_root
+
+    (tmp_path / "PlantVillage-Dataset" / "raw" / "color").mkdir(parents=True)
+    monkeypatch.setenv(DATA_DIR_ENV, str(tmp_path))
+
+    assert resolve_root("data/PlantVillage-Dataset/raw/color") == (
+        tmp_path / "PlantVillage-Dataset" / "raw" / "color"
+    )
+    # A folder the copy lacks falls back to the repository rather than failing.
+    assert resolve_root("data/PlantDoc-Dataset") == REPO_ROOT / "data" / "PlantDoc-Dataset"
+    # Roots outside data/ are never redirected.
+    assert resolve_root("splits") == REPO_ROOT / "splits"
+
+
 # --------------------------------------------------------------------------------- #
 # Corruptions
 # --------------------------------------------------------------------------------- #
