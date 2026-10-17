@@ -1,0 +1,227 @@
+{
+  "device": {
+    "device": "cuda",
+    "backend": "rocm",
+    "name": "AMD Radeon Pro W7900D",
+    "total_memory_gb": 48.0,
+    "amp_dtype": "bfloat16",
+    "torch_version": "2.13.0+rocm10.0.0",
+    "platform": "Linux 6.8.0-79-generic"
+  },
+  "models": {
+    "resnet50": {
+      "params": {
+        "total": 23528522,
+        "trainable": 23528522,
+        "total_m": 23.529
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "fvcore_gflops": 4.1095,
+        "fvcore_uncounted": [
+          "aten::add_",
+          "aten::max_pool2d"
+        ],
+        "thop_error": "No module named 'thop'",
+        "involution_analytic_gflops": 0.0
+      },
+      "latency_gpu": {
+        "mean_ms": 5.692,
+        "median_ms": 5.668,
+        "p90_ms": 5.706,
+        "min_ms": 5.591,
+        "iters": 100,
+        "batch_size": 1
+      },
+      "latency_cpu": {
+        "mean_ms": 114.999,
+        "median_ms": 102.969,
+        "p90_ms": 182.865,
+        "min_ms": 100.712,
+        "iters": 20,
+        "batch_size": 1
+      },
+      "train_memory": {
+        "peak_gb": 2.971,
+        "batch_size": 64,
+        "status": "ok"
+      },
+      "device": {
+        "device": "cuda",
+        "backend": "rocm",
+        "name": "AMD Radeon Pro W7900D",
+        "total_memory_gb": 48.0,
+        "amp_dtype": "bfloat16",
+        "torch_version": "2.13.0+rocm10.0.0",
+        "platform": "Linux 6.8.0-79-generic"
+      }
+    },
+    "vit_b16_baseline": {
+      "params": {
+        "total": 85806346,
+        "trainable": 85806346,
+        "total_m": 85.806
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "fvcore_gflops": 16.8667,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::gelu",
+          "aten::scaled_dot_product_attention"
+        ],
+        "thop_error": "No module named 'thop'",
+        "involution_analytic_gflops": 0.0
+      },
+      "latency_gpu": {
+        "mean_ms": 4.52,
+        "median_ms": 4.517,
+        "p90_ms": 4.553,
+        "min_ms": 4.415,
+        "iters": 100,
+        "batch_size": 1
+      },
+      "latency_cpu": {
+        "mean_ms": 5470.223,
+        "median_ms": 5496.22,
+        "p90_ms": 5892.157,
+        "min_ms": 4999.63,
+        "iters": 20,
+        "batch_size": 1
+      },
+      "train_memory": {
+        "peak_gb": 4.758,
+        "batch_size": 64,
+        "status": "ok"
+      },
+      "device": {
+        "device": "cuda",
+        "backend": "rocm",
+        "name": "AMD Radeon Pro W7900D",
+        "total_memory_gb": 48.0,
+        "amp_dtype": "bfloat16",
+        "torch_version": "2.13.0+rocm10.0.0",
+        "platform": "Linux 6.8.0-79-generic"
+      }
+    },
+    "agritl_vit": {
+      "params": {
+        "total": 99998986,
+        "trainable": 99998986,
+        "total_m": 99.999
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "fvcore_gflops": 19.6644,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::max_pool1d",
+          "aten::scaled_dot_product_attention"
+        ],
+        "thop_error": "No module named 'thop'",
+        "involution_analytic_gflops": 0.0
+      },
+      "latency_gpu": {
+        "mean_ms": 12.762,
+        "median_ms": 12.709,
+        "p90_ms": 12.776,
+        "min_ms": 12.435,
+        "iters": 100,
+        "batch_size": 1
+      },
+      "latency_cpu": {
+        "mean_ms": 5865.054,
+        "median_ms": 5890.66,
+        "p90_ms": 6201.407,
+        "min_ms": 5399.629,
+        "iters": 20,
+        "batch_size": 1
+      },
+      "train_memory": {
+        "peak_gb": 8.003,
+        "batch_size": 64,
+        "status": "ok"
+      },
+      "device": {
+        "device": "cuda",
+        "backend": "rocm",
+        "name": "AMD Radeon Pro W7900D",
+        "total_memory_gb": 48.0,
+        "amp_dtype": "bfloat16",
+        "torch_version": "2.13.0+rocm10.0.0",
+        "platform": "Linux 6.8.0-79-generic"
+      }
+    },
+    "involeaf_b16": {
+      "params": {
+        "total": 64697674,
+        "trainable": 64697674,
+        "total_m": 64.698
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "fvcore_gflops": 12.7005,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::gelu",
+          "aten::im2col",
+          "aten::mul",
+          "aten::scaled_dot_product_attention",
+          "aten::sum"
+        ],
+        "thop_error": "No module named 'thop'",
+        "involution_analytic_gflops": 0.177
+      },
+      "latency_gpu": {
+        "mean_ms": 10.45,
+        "median_ms": 10.449,
+        "p90_ms": 10.496,
+        "min_ms": 10.091,
+        "iters": 100,
+        "batch_size": 1
+      },
+      "latency_cpu": {
+        "mean_ms": 5949.906,
+        "median_ms": 5894.963,
+        "p90_ms": 6492.931,
+        "min_ms": 5499.716,
+        "iters": 20,
+        "batch_size": 1
+      },
+      "train_memory": {
+        "peak_gb": 29.469,
+        "batch_size": 64,
+        "status": "ok"
+      },
+      "device": {
+        "device": "cuda",
+        "backend": "rocm",
+        "name": "AMD Radeon Pro W7900D",
+        "total_memory_gb": 48.0,
+        "amp_dtype": "bfloat16",
+        "torch_version": "2.13.0+rocm10.0.0",
+        "platform": "Linux 6.8.0-79-generic"
+      }
+    }
+  }
+}
