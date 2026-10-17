@@ -102,75 +102,109 @@ def efficiency_table() -> str:
     return "\n".join(chunks)
 
 
+SEED_NOTE = (
+    "\nEach cell is the mean over the seeds listed, as `mean ± std` (sample standard "
+    "deviation) once there is more than one seed. A single number is one seed and "
+    "carries no error estimate.\n"
+)
+
+
+def _cell(values: list[float], scale: float = 1.0, digits: int = 4) -> str:
+    """Mean, or mean ± std across seeds when there is more than one."""
+    values = [v * scale for v in values if v is not None]
+    if not values:
+        return "-"
+    if len(values) == 1:
+        return f"{values[0]:.{digits}f}"
+    return f"{mean(values):.{digits}f} ± {stdev(values):.{digits}f}"
+
+
+def _evals_by_model() -> dict[str, list[dict]]:
+    """Evaluation records grouped by config name, so seeds of one model share a row."""
+    grouped: dict[str, list[dict]] = defaultdict(list)
+    for record in _load("eval_*.json"):
+        name = record["config"].get("name", Path(record["checkpoint"]).stem)
+        grouped[name].append(record)
+    return dict(sorted(grouped.items()))
+
+
+def _seeds(group: list[dict]) -> str:
+    return ", ".join(str(s) for s in sorted(r["config"].get("seed", "?") for r in group))
+
+
 def robustness_table() -> str:
-    """Accuracy under each corruption, one row per model."""
-    evals = _load("eval_*.json")
-    if not evals:
+    """Accuracy under each corruption, one row per model, averaged over seeds."""
+    grouped = _evals_by_model()
+    if not grouped:
         return "_no evaluation results yet_\n"
 
     corruptions = ["clean", "colorjitter", "blur", "erasing", "combined"]
     rows = []
-    for record in evals:
-        name = record["config"].get("name", Path(record["checkpoint"]).stem)
-        rob = record.get("robustness", {})
-        clean = rob.get("clean", {}).get("accuracy")
-        row = [name] + [
-            f"{rob[c]['accuracy']:.4f}" if c in rob else "-" for c in corruptions
-        ]
-        if clean and "combined" in rob:
-            row.append(f"{(clean - rob['combined']['accuracy']) * 100:.1f}")
-        else:
-            row.append("-")
+    for name, group in grouped.items():
+        robs = [r.get("robustness", {}) for r in group]
+        row = [name, _seeds(group)]
+        for c in corruptions:
+            row.append(_cell([rob[c]["accuracy"] for rob in robs if c in rob]))
+        # The drop is computed per seed, then averaged, so its spread is the spread of
+        # the drop itself rather than a combination of two separately averaged columns.
+        drops = [rob["clean"]["accuracy"] - rob["combined"]["accuracy"]
+                 for rob in robs if "clean" in rob and "combined" in rob]
+        row.append(_cell(drops, scale=100, digits=1))
         rows.append(row)
-    return _md_table(["model"] + corruptions + ["clean-combined drop (pp)"], rows)
+    return _md_table(
+        ["model", "seeds"] + corruptions + ["clean-combined drop (pp)"], rows
+    ) + SEED_NOTE
 
 
 def resolution_table() -> str:
-    evals = _load("eval_*.json")
-    if not evals:
+    grouped = _evals_by_model()
+    if not grouped:
         return "_no evaluation results yet_\n"
     resolutions = ["128", "200", "224"]
     rows = []
-    for record in evals:
-        name = record["config"].get("name", Path(record["checkpoint"]).stem)
-        res = record.get("resolution", {})
-        rows.append([name] + [
-            f"{res[r]['accuracy']:.4f}" if r in res else "-" for r in resolutions
+    for name, group in grouped.items():
+        res = [r.get("resolution", {}) for r in group]
+        rows.append([name, _seeds(group)] + [
+            _cell([x[r]["accuracy"] for x in res if r in x]) for r in resolutions
         ])
-    return _md_table(["model"] + [f"{r}px" for r in resolutions], rows) + (
-        "\n128 and 200 use the information-loss protocol (downscale, then restore to "
+    return _md_table(["model", "seeds"] + [f"{r}px" for r in resolutions], rows) + (
+        SEED_NOTE
+        + "\n128 and 200 use the information-loss protocol (downscale, then restore to "
         "224). A native 200x200 evaluation is impossible on a patch-16 ViT, since 200 "
         "is not divisible by 16.\n"
     )
 
 
 def cross_domain_table() -> str:
-    evals = [r for r in _load("eval_*.json") if "cross_domain" in r]
-    if not evals:
+    grouped = {name: [r for r in group if "cross_domain" in r]
+               for name, group in _evals_by_model().items()}
+    grouped = {name: group for name, group in grouped.items() if group}
+    if not grouped:
         return "_no cross-domain results yet_\n"
     rows = []
-    for record in evals:
-        name = record["config"].get("name", Path(record["checkpoint"]).stem)
-        cd = record["cross_domain"]
-        clean = record.get("robustness", {}).get("clean", {}).get("accuracy")
+    for name, group in grouped.items():
+        cds = [r["cross_domain"] for r in group]
+        cleans = [r.get("robustness", {}).get("clean", {}).get("accuracy") for r in group]
         # PlantDoc has no Target_Spot folder, so plain macro-F1 averages in a class with
         # zero support and understates the result. Quote F1 over the classes present.
-        present_f1 = cd.get("macro_f1_present", cd["macro_f1"])
-        classes = (f"{cd['classes_present']}/{cd['classes_total']}"
-                   if "classes_present" in cd else "-")
+        present_f1 = [cd.get("macro_f1_present", cd["macro_f1"]) for cd in cds]
+        first = cds[0]
+        classes = (f"{first['classes_present']}/{first['classes_total']}"
+                   if "classes_present" in first else "-")
         rows.append([
             name,
-            f"{clean:.4f}" if clean else "-",
-            f"{cd['accuracy']:.4f}",
-            f"{present_f1:.4f}",
+            _seeds(group),
+            _cell(cleans),
+            _cell([cd["accuracy"] for cd in cds]),
+            _cell(present_f1),
             classes,
-            cd["n_images"],
+            first["n_images"],
         ])
     return _md_table(
-        ["model", "PlantVillage test", "PlantDoc (field)",
+        ["model", "seeds", "PlantVillage test", "PlantDoc (field)",
          "PlantDoc macro-F1 (classes present)", "classes", "images"],
         rows,
-    )
+    ) + SEED_NOTE
 
 
 def write_csv(dest: Path) -> None:
