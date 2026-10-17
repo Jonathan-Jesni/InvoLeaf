@@ -38,7 +38,10 @@ cd "$(dirname "$0")/.." || exit 1
 SEED="${SEED:-42}"
 BATCH="${BATCH:-64}"            # 48GB W7900 fits 64 for every model; check_env.py confirms
 BUDGET_MIN="${BUDGET_MIN:-165}" # minutes this session may use, with margin before cutoff
-EVAL_MIN="${EVAL_MIN:-10}"      # never start an evaluation with less than this left
+# Never start an evaluation with less than this left. With images on local disk a full
+# evaluation takes under a minute; a run whose evaluation is skipped loses its checkpoint
+# at session end and has to be retrained, so this errs towards running it.
+EVAL_MIN="${EVAL_MIN:-3}"
 LOCAL_DIR="${LOCAL_DIR:-/root/involeaf_local}"   # the machine's own (non-network) disk
 STAGE="${STAGE:-1}"             # 1 = copy images to LOCAL_DIR first; 0 = read in place
 PAUSED_EXIT=3
