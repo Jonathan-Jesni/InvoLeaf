@@ -139,7 +139,7 @@ def measure_train_memory(
         return {"peak_gb": None, "note": "peak memory is only tracked on CUDA/ROCm"}
 
     model = model.train().to(device)
-    dev.reset_peak_memory_stats(device)
+    dev.reset_peak_memory(device)
     torch.cuda.empty_cache()
 
     x = torch.randn(batch_size, 3, input_size, input_size, device=device)
