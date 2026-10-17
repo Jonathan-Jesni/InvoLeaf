@@ -1,0 +1,231 @@
+{
+  "run_name": "agritl_vit_seed44",
+  "config": {
+    "split_file": "splits/plantvillage_tomato.json",
+    "image_size": 224,
+    "workers": 4,
+    "seed": 44,
+    "epochs": 20,
+    "warmup_epochs": 2,
+    "label_smoothing": 0.1,
+    "grad_clip": 1.0,
+    "weight_decay": 0.05,
+    "min_lr_factor": 0.01,
+    "lr": 0.0001,
+    "lr_backbone": 1e-05,
+    "lr_head": 0.001,
+    "effective_batch": 64,
+    "batch_size": 64,
+    "device": "auto",
+    "amp": "auto",
+    "pretrained": true,
+    "checkpoint_dir": "/root/involeaf_local/checkpoints",
+    "name": "agritl_vit",
+    "arch": "agritl_vit",
+    "backbone": "vit_base_patch16_224.augreg_in21k_ft_in1k",
+    "dual_attention": true,
+    "resnet_module": true,
+    "dropout": 0.1
+  },
+  "device": {
+    "device": "cuda",
+    "backend": "rocm",
+    "name": "AMD Radeon Pro W7900D",
+    "total_memory_gb": 48.0,
+    "amp_dtype": "bfloat16",
+    "torch_version": "2.13.0+rocm10.0.0",
+    "platform": "Linux 6.8.0-79-generic"
+  },
+  "started_at": "2026-10-17T14:21:58",
+  "epochs": [
+    {
+      "epoch": 0,
+      "train_loss": 1.5580361437315893,
+      "train_acc": 0.5599747474747475,
+      "val_acc": 0.7122935779816514,
+      "val_macro_f1": 0.6327234177253207,
+      "lr": 0.0005025252525252525
+    },
+    {
+      "epoch": 1,
+      "train_loss": 1.0295411634324776,
+      "train_acc": 0.7931660353535354,
+      "val_acc": 0.8609174311926605,
+      "val_macro_f1": 0.8050907122946696,
+      "lr": 0.001
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.8013632360732916,
+      "train_acc": 0.8974116161616161,
+      "val_acc": 0.9137614678899083,
+      "val_macro_f1": 0.8850688036369799,
+      "lr": 0.000992479837741043
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.7005407813221517,
+      "train_acc": 0.9405776515151515,
+      "val_acc": 0.9460550458715596,
+      "val_macro_f1": 0.9291733501634225,
+      "lr": 0.0009701478472890247
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.6426807494476589,
+      "train_acc": 0.9622001262626263,
+      "val_acc": 0.971743119266055,
+      "val_macro_f1": 0.9651412045529465,
+      "lr": 0.0009336825748732972
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.6189497179455228,
+      "train_acc": 0.9677241161616161,
+      "val_acc": 0.9750458715596331,
+      "val_macro_f1": 0.9706676959123051,
+      "lr": 0.0008841919993438941
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.5975103730505164,
+      "train_acc": 0.9745107323232324,
+      "val_acc": 0.9750458715596331,
+      "val_macro_f1": 0.9665434938565454,
+      "lr": 0.0008231798667948369
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.5785565761604694,
+      "train_acc": 0.9780618686868687,
+      "val_acc": 0.9842201834862385,
+      "val_macro_f1": 0.9828443458813922,
+      "lr": 0.0007524999999999999
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.5637179757609512,
+      "train_acc": 0.9839804292929293,
+      "val_acc": 0.9721100917431192,
+      "val_macro_f1": 0.968109737495394,
+      "lr": 0.0006742999709462061
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.5520051251156162,
+      "train_acc": 0.9859532828282829,
+      "val_acc": 0.9798165137614679,
+      "val_macro_f1": 0.9769775858924646,
+      "lr": 0.0005909558479451306
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.5423922433395578,
+      "train_acc": 0.9885574494949495,
+      "val_acc": 0.9842201834862385,
+      "val_macro_f1": 0.9818966973891232,
+      "lr": 0.000505
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.5345790118280084,
+      "train_acc": 0.9903724747474747,
+      "val_acc": 0.9889908256880734,
+      "val_macro_f1": 0.9868887274189874,
+      "lr": 0.0004190441520548695
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.5261099332510822,
+      "train_acc": 0.9931344696969697,
+      "val_acc": 0.986788990825688,
+      "val_macro_f1": 0.9863533494630993,
+      "lr": 0.00033570002905379407
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.5200316746427556,
+      "train_acc": 0.9942392676767676,
+      "val_acc": 0.986788990825688,
+      "val_macro_f1": 0.9843029357344065,
+      "lr": 0.00025750000000000013
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.5171918733553453,
+      "train_acc": 0.9947127525252525,
+      "val_acc": 0.9926605504587156,
+      "val_macro_f1": 0.991525315729939,
+      "lr": 0.00018682013320516302
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.5133624284556417,
+      "train_acc": 0.9957386363636364,
+      "val_acc": 0.9900917431192661,
+      "val_macro_f1": 0.9901121903832001,
+      "lr": 0.00012580800065610596
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.5090610601685264,
+      "train_acc": 0.9975536616161617,
+      "val_acc": 0.9900917431192661,
+      "val_macro_f1": 0.9898494179871214,
+      "lr": 7.631742512670284e-05
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.5078358535814766,
+      "train_acc": 0.99771148989899,
+      "val_acc": 0.9911926605504587,
+      "val_macro_f1": 0.9910157410593637,
+      "lr": 3.9852152710975386e-05
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.5076809648913566,
+      "train_acc": 0.99771148989899,
+      "val_acc": 0.9911926605504587,
+      "val_macro_f1": 0.9909611639441446,
+      "lr": 1.7520162258957028e-05
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.5075424719940532,
+      "train_acc": 0.9977904040404041,
+      "val_acc": 0.9922935779816514,
+      "val_macro_f1": 0.9922954307811995,
+      "lr": 1e-05
+    }
+  ],
+  "num_classes": 10,
+  "class_names": [
+    "Tomato___Bacterial_spot",
+    "Tomato___Early_blight",
+    "Tomato___Late_blight",
+    "Tomato___Leaf_Mold",
+    "Tomato___Septoria_leaf_spot",
+    "Tomato___Spider_mites Two-spotted_spider_mite",
+    "Tomato___Target_Spot",
+    "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+    "Tomato___Tomato_mosaic_virus",
+    "Tomato___healthy"
+  ],
+  "effective_batch": 64,
+  "accum_steps": 1,
+  "params_total": 99998986,
+  "model_meta": {
+    "backbone": "vit_base_patch16_224.augreg_in21k_ft_in1k",
+    "architecture": "agritl_vit",
+    "dual_attention": true,
+    "resnet_module": true,
+    "dropout": 0.1,
+    "reproduction_note": "Reproduced from the textual description; module wiring is an interpretation documented in involeaf/models/agritl_vit.py."
+  },
+  "best_val_macro_f1": 0.9922954307811995,
+  "best_epoch": 19,
+  "checkpoint": "/root/involeaf_local/checkpoints/agritl_vit_seed44.pth",
+  "peak_train_memory_gb": 8.766369342803955,
+  "finished_at": "2026-10-17T14:44:39"
+}
