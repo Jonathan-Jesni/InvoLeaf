@@ -19,6 +19,8 @@ env/
 results/*
 !results/.gitkeep
 !results/*.json
+# Interpretability arrays (Grad-CAM, kernel maps, ~2 MB) from analyze_mechanism.py.
+!results/interp_*.npz
 runs/
 wandb/
 *.log
