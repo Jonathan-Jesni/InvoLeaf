@@ -53,8 +53,30 @@ def _short(name: str) -> str:
 
 
 def _upsample(cam: np.ndarray, size: int = 224) -> np.ndarray:
+    """Min-max scale, then nearest-neighbour upsample to the image.
+
+    Min-max (as pytorch-grad-cam does) rather than divide-by-max: InvoLeaf's raw maps
+    carry a large constant offset (minimum 0.5-0.9 of the maximum), which would tint the
+    whole image and hide where the map actually varies.
+    """
+    lo, hi = cam.min(), cam.max()
+    cam = (cam - lo) / (hi - lo) if hi > lo else np.zeros_like(cam)
     reps = size // cam.shape[0]
     return np.kron(cam, np.ones((reps, reps)))[:size, :size]
+
+
+def _trained_blocks(npz) -> list[int]:
+    """Blocks whose involution left its identity initialisation.
+
+    The last block's involution never trains: only the CLS token reaches the classifier,
+    the CLS token bypasses involution, and nothing after the last block mixes patch
+    tokens back into it, so no gradient reaches those kernels. They stay at the delta
+    (centre tap ~0.99 of the weight). Showing them would read as a finding about the
+    operator when it is a fact about where it sits.
+    """
+    prof = npz["kprofile"]
+    centre = prof.shape[1] // 2
+    return [b for b in range(prof.shape[0]) if prof[b, centre] / prof[b].sum() < 0.95]
 
 
 def _pick(classes: list[str], class_names: list[str], labels: np.ndarray) -> list[int]:
@@ -116,8 +138,9 @@ def fig_gradcam(meta: dict, npz, rows: list[int], out: Path) -> None:
 def fig_kernel_maps(meta: dict, npz, pos: int, out: Path) -> None:
     names = meta["class_names"]
     conds = ["clean", "colorjitter", "erasing"]
-    n_blocks = npz["kmap_clean"].shape[0]
-    blocks = sorted({0, n_blocks // 3, (2 * n_blocks) // 3, n_blocks - 1})
+    trained = _trained_blocks(npz)
+    n = len(trained)
+    blocks = sorted({trained[0], trained[n // 3], trained[(2 * n) // 3], trained[-1]})
     fig, axes = plt.subplots(len(conds), 1 + len(blocks),
                              figsize=(2.0 * (1 + len(blocks)) + 0.6, 2.1 * len(conds)))
     axes = np.atleast_2d(axes)
@@ -150,8 +173,9 @@ def _series(entries: list[dict]) -> tuple[np.ndarray, np.ndarray]:
     return m, s
 
 
-def fig_drift(meta: dict, out: Path) -> None:
+def fig_drift(meta: dict, npz, out: Path) -> None:
     d = meta["drift"]
+    trained = set(_trained_blocks(npz))
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2), sharey=False)
     panels = [
         ("colorjitter", "stage_drift", "kernel_drift", "Colour shift: drift of all tokens"),
@@ -169,6 +193,7 @@ def fig_drift(meta: dict, out: Path) -> None:
                         textcoords="offset points", va="center", fontsize=9, color=color)
         km, _ = _series(d["involeaf_b16"][cond][kkey])
         xs = np.arange(1, len(km) + 1)
+        km[[b for b in range(len(km)) if b not in trained]] = np.nan
         ax.plot(xs, km, color=K_RAMP[3], linewidth=1.6, marker="s", markersize=4,
                 markeredgecolor=SURFACE, label="InvoLeaf generated kernels", zorder=2)
         ax.set_xticks(xs)
@@ -176,10 +201,14 @@ def fig_drift(meta: dict, out: Path) -> None:
         ax.set_ylabel("Relative change vs clean image")
         ax.set_ylim(bottom=0)
         ax.set_title(title)
-    axes[0].legend(loc="upper left")
+    axes[0].legend(loc="center right")
     ax_note = (f"{meta['n_images']} test images, corruptions seeded exactly as in the "
                f"robustness evaluation" + ("  (SMOKE: untrained models)" if meta["smoke"]
                                             else f", seed-{meta['seed']} checkpoints"))
+    untrained = [str(b + 1) for b in range(len(km)) if b not in trained]
+    if untrained:
+        ax_note += (f". Kernels not drawn for block {', '.join(untrained)}: no gradient "
+                    f"reaches them, so they never leave their identity initialisation")
     fig.text(0.01, -0.02, ax_note, fontsize=8, color=MUTED)
     fig.tight_layout()
     _save(fig, out, "fig10_drift")
@@ -204,7 +233,7 @@ def main() -> None:
     print(f"drawing mechanism figures into {out}")
     fig_gradcam(meta, npz, rows, out)
     fig_kernel_maps(meta, npz, rows[0], out)
-    fig_drift(meta, out)
+    fig_drift(meta, npz, out)
 
 
 if __name__ == "__main__":
