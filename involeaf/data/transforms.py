@@ -147,7 +147,7 @@ class InRangeErasing:
 
 
 CORRUPTIONS = ("clean", "colorjitter", "blur", "erasing", "combined",
-               "erasing_black", "erasing_noise01")
+               "erasing_black", "erasing_noise01", "combined_black")
 
 
 class DeterministicCorruption:
@@ -169,13 +169,16 @@ class DeterministicCorruption:
 
         self.pil_ops: list = []
         self.tensor_ops: list = []
-        if name in ("colorjitter", "combined"):
+        # combined_black is the AgriTL Table 17 combination with a physically possible
+        # occlusion: the same colour shift, blur and box as "combined" (the RNG is
+        # consumed in the same order), but a black patch instead of out-of-range noise.
+        if name in ("colorjitter", "combined", "combined_black"):
             self.pil_ops.append(_color_jitter())
-        if name in ("blur", "combined"):
+        if name in ("blur", "combined", "combined_black"):
             self.pil_ops.append(_gaussian_blur())
         if name in ("erasing", "combined"):
             self.tensor_ops.append(_random_erasing())
-        if name == "erasing_black":
+        if name in ("erasing_black", "combined_black"):
             self.tensor_ops.append(InRangeErasing("black"))
         if name == "erasing_noise01":
             self.tensor_ops.append(InRangeErasing("noise01"))

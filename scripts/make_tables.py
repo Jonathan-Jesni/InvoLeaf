@@ -160,8 +160,8 @@ OCCLUSION_NOTE = (
     "\n`erasing` fills the box with N(0,1) noise added before normalisation, far outside "
     "the valid pixel range; it is kept so earlier numbers stay comparable. "
     "`erasing_black` and `erasing_noise01` use the same boxes, filled with a solid black "
-    "patch and with uniform noise in [0,1]. `-` means the run was evaluated before those "
-    "two tests existed.\n"
+    "patch and with uniform noise in [0,1]; `combined_black` is `combined` with the black "
+    "patch. `-` means the run was evaluated before those tests existed.\n"
 )
 
 
@@ -172,7 +172,7 @@ def robustness_table(maize: bool = False) -> str:
         return "_no evaluation results yet_\n"
 
     corruptions = ["clean", "colorjitter", "blur", "erasing", "combined",
-                   "erasing_black", "erasing_noise01"]
+                   "erasing_black", "erasing_noise01", "combined_black"]
     rows = []
     for name, group in grouped.items():
         robs = [r.get("robustness", {}) for r in group]

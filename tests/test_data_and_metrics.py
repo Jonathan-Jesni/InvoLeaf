@@ -193,7 +193,7 @@ def test_corruption_actually_changes_the_image():
     img = textured_image()
     clean = build_eval_transform("clean")(img)
     for name in ("colorjitter", "blur", "erasing", "combined",
-                 "erasing_black", "erasing_noise01"):
+                 "erasing_black", "erasing_noise01", "combined_black"):
         assert not torch.allclose(DeterministicCorruption(name)(img, index=0), clean)
 
 
@@ -222,6 +222,22 @@ def test_in_range_erasing_stays_in_the_valid_pixel_range(fill):
     mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
     std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
     pixels = out * std + mean
+    assert pixels.min() >= -1e-5 and pixels.max() <= 1 + 1e-5
+
+
+@pytest.mark.parametrize("index", [0, 7, 123])
+def test_combined_black_differs_from_combined_only_inside_the_box(index):
+    """Same colour shift, blur and box as "combined"; only the patch fill changes."""
+    img = textured_image()
+    noisy = DeterministicCorruption("combined")(img, index=index)
+    black = DeterministicCorruption("combined_black")(img, index=index)
+    differs = (noisy - black).abs().sum(0) > 1e-6
+    rows, cols = torch.nonzero(differs, as_tuple=True)
+    box_area = (rows.max() - rows.min() + 1) * (cols.max() - cols.min() + 1)
+    assert differs.sum() == box_area          # one solid rectangle, nothing outside it
+    mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+    std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
+    pixels = black * std + mean
     assert pixels.min() >= -1e-5 and pixels.max() <= 1 + 1e-5
 
 

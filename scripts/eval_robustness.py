@@ -66,7 +66,7 @@ def main() -> None:
     }
 
     log.info("robustness sweep (clean / colorjitter / blur / erasing / combined / "
-             "erasing_black / erasing_noise01)")
+             "erasing_black / erasing_noise01 / combined_black)")
     out["robustness"] = robustness_sweep(
         model, split_file, device, batch_size=args.batch_size,
         workers=args.workers, amp_dtype=amp_dtype,

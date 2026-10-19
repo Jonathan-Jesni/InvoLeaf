@@ -44,6 +44,11 @@ BUDGET_MIN="${BUDGET_MIN:-165}" # minutes this session may use, with margin befo
 EVAL_MIN="${EVAL_MIN:-3}"
 LOCAL_DIR="${LOCAL_DIR:-/root/involeaf_local}"   # the machine's own (non-network) disk
 STAGE="${STAGE:-1}"             # 1 = copy images to LOCAL_DIR first; 0 = read in place
+# REEVAL=1: an evaluation without the in-range occlusion tests (added 2026-10-19 after the
+# original "erasing" patch turned out to be far outside the valid pixel range) counts as
+# missing. The run is re-evaluated if its checkpoint is still on this machine, otherwise
+# retrained with the same config and seed and then evaluated, overwriting both JSONs.
+REEVAL="${REEVAL:-0}"
 PAUSED_EXIT=3
 
 LOGDIR="results/logs"
@@ -111,19 +116,32 @@ stage_data () {                 # copy the images to local disk once per session
   export INVOLEAF_DATA_DIR="$dst"
 }
 
+evaluated () {                  # evaluated <run-name>: has an up-to-date evaluation
+  local f="results/eval_${1}.json"
+  [[ -f "$f" ]] || return 1
+  [[ "$REEVAL" == "1" ]] || return 0
+  grep -q '"combined_black"' "$f"
+}
+
+checkpoint_of () {              # checkpoint_of <run-name>: path, or nothing
+  if [[ -f "${CKPT_DIR}/${1}.pth" ]]; then echo "${CKPT_DIR}/${1}.pth"
+  elif [[ -f "results/checkpoints/${1}.pth" ]]; then echo "results/checkpoints/${1}.pth"
+  fi
+}
+
 train () {                      # train <config> <base-name> [KEY=VALUE ...]
   local cfg="$1" base="$2"; shift 2
   local name="${base}_seed${SEED}"
   [[ $STOP -eq 1 ]] && return 0
 
   if [[ -f "results/${name}.json" ]]; then
-    if [[ -f "results/eval_${name}.json" || -f "${CKPT_DIR}/${name}.pth" ]]; then
+    if evaluated "$name" || [[ -n "$(checkpoint_of "$name")" ]]; then
       echo ">> skip   ${name} (finished)"; SKIPPED+=("$name"); return 0
     fi
-    # Trained in an earlier session but never evaluated, and the checkpoint went with
-    # that session's local disk. Without retraining it would be skipped forever and
-    # never get robustness or PlantDoc numbers.
-    echo ">> redo   ${name}: trained earlier but never evaluated, and its checkpoint is gone"
+    # Trained in an earlier session but never evaluated (or, with REEVAL=1, evaluated
+    # before the in-range occlusion tests existed), and the checkpoint went with that
+    # session's local disk. Without retraining it would never get those numbers.
+    echo ">> redo   ${name}: no up-to-date evaluation and its checkpoint is gone - retraining"
     mv "results/${name}.json" "results/${name}.json.stale"
   fi
 
@@ -160,15 +178,14 @@ train () {                      # train <config> <base-name> [KEY=VALUE ...]
 evaluate () {                   # evaluate <base-name> [eval_robustness.py args ...]
   local name="${1}_seed${SEED}"; shift
   [[ $STOP -eq 1 ]] && return 0
-  if [[ -f "results/eval_${name}.json" ]]; then
+  if evaluated "$name"; then
     echo ">> skip   eval ${name} (done)"; SKIPPED+=("eval:${name}"); return 0
   fi
   # Only evaluate a finished run: the best-so-far checkpoint exists from epoch 0 on.
   [[ -f "results/${name}.json" ]] || return 0
 
-  local ckpt="${CKPT_DIR}/${name}.pth"
-  [[ -f "$ckpt" ]] || ckpt="results/checkpoints/${name}.pth"   # older layout
-  if [[ ! -f "$ckpt" ]]; then
+  local ckpt; ckpt=$(checkpoint_of "$name")   # local disk, or the older /workspace layout
+  if [[ -z "$ckpt" ]]; then
     echo ">> skip   eval ${name} (checkpoint is not on this machine)"
     SKIPPED+=("eval:${name}"); return 0
   fi

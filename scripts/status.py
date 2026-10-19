@@ -86,6 +86,9 @@ def state(run: str, active: dict[str, str]) -> tuple[str, str]:
     trained = (RESULTS / f"{run}.json").exists()
     evaluated = (RESULTS / f"eval_{run}.json").exists()
     if trained and evaluated:
+        text = (RESULTS / f"eval_{run}.json").read_text(encoding="utf-8")
+        if '"combined_black"' not in text:
+            return "done", "(no in-range occlusion tests)"
         return "done", ""
     if trained:
         return "trained", "not evaluated yet"
