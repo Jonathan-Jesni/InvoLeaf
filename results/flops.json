@@ -21,10 +21,15 @@
           224
         ],
         "unit": "GMACs",
-        "fvcore_error": "No module named 'fvcore'",
-        "thop_gmacs": 4.1317,
+        "fvcore_gmacs": 4.1095,
+        "fvcore_uncounted": [
+          "aten::add_",
+          "aten::max_pool2d"
+        ],
+        "thop_error": "No module named 'thop'",
         "involution_analytic_gmacs": 0.0,
-        "attention_analytic_gmacs": 0.0
+        "attention_analytic_gmacs": 0.0,
+        "total_gmacs": 4.1095
       }
     },
     "vit_b16_baseline": {
@@ -41,10 +46,16 @@
           224
         ],
         "unit": "GMACs",
-        "fvcore_error": "No module named 'fvcore'",
-        "thop_gmacs": 16.8477,
+        "fvcore_gmacs": 16.8667,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::gelu",
+          "aten::scaled_dot_product_attention"
+        ],
+        "thop_error": "No module named 'thop'",
         "involution_analytic_gmacs": 0.0,
-        "attention_analytic_gmacs": 0.7153
+        "attention_analytic_gmacs": 0.7153,
+        "total_gmacs": 17.582
       }
     },
     "agritl_vit": {
@@ -61,10 +72,16 @@
           224
         ],
         "unit": "GMACs",
-        "fvcore_error": "No module named 'fvcore'",
-        "thop_gmacs": 19.6437,
+        "fvcore_gmacs": 19.6644,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::max_pool1d",
+          "aten::scaled_dot_product_attention"
+        ],
+        "thop_error": "No module named 'thop'",
         "involution_analytic_gmacs": 0.0,
-        "attention_analytic_gmacs": 1.4307
+        "attention_analytic_gmacs": 1.4307,
+        "total_gmacs": 21.0951
       }
     },
     "involeaf_b16": {
@@ -81,10 +98,19 @@
           224
         ],
         "unit": "GMACs",
-        "fvcore_error": "No module named 'fvcore'",
-        "thop_gmacs": 12.6793,
+        "fvcore_gmacs": 12.7005,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::gelu",
+          "aten::im2col",
+          "aten::mul",
+          "aten::scaled_dot_product_attention",
+          "aten::sum"
+        ],
+        "thop_error": "No module named 'thop'",
         "involution_analytic_gmacs": 0.0885,
-        "attention_analytic_gmacs": 0.7153
+        "attention_analytic_gmacs": 0.7153,
+        "total_gmacs": 13.5043
       }
     },
     "vit_s16_baseline": {
@@ -101,10 +127,16 @@
           224
         ],
         "unit": "GMACs",
-        "fvcore_error": "No module named 'fvcore'",
-        "thop_gmacs": 4.2408,
+        "fvcore_gmacs": 4.2503,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::gelu",
+          "aten::scaled_dot_product_attention"
+        ],
+        "thop_error": "No module named 'thop'",
         "involution_analytic_gmacs": 0.0,
-        "attention_analytic_gmacs": 0.3577
+        "attention_analytic_gmacs": 0.3577,
+        "total_gmacs": 4.608
       }
     },
     "involeaf_s16": {
@@ -121,10 +153,19 @@
           224
         ],
         "unit": "GMACs",
-        "fvcore_error": "No module named 'fvcore'",
-        "thop_gmacs": 3.1987,
+        "fvcore_gmacs": 3.2093,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::gelu",
+          "aten::im2col",
+          "aten::mul",
+          "aten::scaled_dot_product_attention",
+          "aten::sum"
+        ],
+        "thop_error": "No module named 'thop'",
         "involution_analytic_gmacs": 0.0443,
-        "attention_analytic_gmacs": 0.3577
+        "attention_analytic_gmacs": 0.3577,
+        "total_gmacs": 3.6113
       }
     },
     "abl_variant_pure": {
@@ -141,10 +182,18 @@
           224
         ],
         "unit": "GMACs",
-        "fvcore_error": "No module named 'fvcore'",
-        "thop_gmacs": 7.1019,
+        "fvcore_gmacs": 7.1231,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::im2col",
+          "aten::mul",
+          "aten::scaled_dot_product_attention",
+          "aten::sum"
+        ],
+        "thop_error": "No module named 'thop'",
         "involution_analytic_gmacs": 0.0885,
-        "attention_analytic_gmacs": 0.7153
+        "attention_analytic_gmacs": 0.7153,
+        "total_gmacs": 7.9269
       }
     },
     "abl_variant_parallel": {
@@ -161,10 +210,19 @@
           224
         ],
         "unit": "GMACs",
-        "fvcore_error": "No module named 'fvcore'",
-        "thop_gmacs": 18.2567,
+        "fvcore_gmacs": 18.2779,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::gelu",
+          "aten::im2col",
+          "aten::mul",
+          "aten::scaled_dot_product_attention",
+          "aten::sum"
+        ],
+        "thop_error": "No module named 'thop'",
         "involution_analytic_gmacs": 0.0885,
-        "attention_analytic_gmacs": 0.7153
+        "attention_analytic_gmacs": 0.7153,
+        "total_gmacs": 19.0817
       }
     },
     "abl_placement_first11": {
@@ -181,10 +239,19 @@
           224
         ],
         "unit": "GMACs",
-        "fvcore_error": "No module named 'fvcore'",
-        "thop_gmacs": 13.0267,
+        "fvcore_gmacs": 13.0477,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::gelu",
+          "aten::im2col",
+          "aten::mul",
+          "aten::scaled_dot_product_attention",
+          "aten::sum"
+        ],
+        "thop_error": "No module named 'thop'",
         "involution_analytic_gmacs": 0.0811,
-        "attention_analytic_gmacs": 0.7153
+        "attention_analytic_gmacs": 0.7153,
+        "total_gmacs": 13.8441
       }
     },
     "abl_kernel_k3": {
@@ -201,10 +268,19 @@
           224
         ],
         "unit": "GMACs",
-        "fvcore_error": "No module named 'fvcore'",
-        "thop_gmacs": 11.8123,
+        "fvcore_gmacs": 11.8334,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::gelu",
+          "aten::im2col",
+          "aten::mul",
+          "aten::scaled_dot_product_attention",
+          "aten::sum"
+        ],
+        "thop_error": "No module named 'thop'",
         "involution_analytic_gmacs": 0.0163,
-        "attention_analytic_gmacs": 0.7153
+        "attention_analytic_gmacs": 0.7153,
+        "total_gmacs": 12.565
       }
     }
   }
