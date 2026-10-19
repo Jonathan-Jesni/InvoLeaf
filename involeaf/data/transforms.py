@@ -101,12 +101,53 @@ def _gaussian_blur() -> T.GaussianBlur:
     return T.GaussianBlur(kernel_size=5, sigma=(0.6, 2.0))
 
 
+ERASE_SCALE = (0.05, 0.20)
+ERASE_RATIO = (0.3, 3.3)
+
+
 def _random_erasing() -> T.RandomErasing:
-    """Occlusion by another leaf, a hand, or debris. Operates on tensors."""
-    return T.RandomErasing(p=1.0, scale=(0.05, 0.20), ratio=(0.3, 3.3), value="random")
+    """Occlusion by another leaf, a hand, or debris. Operates on tensors.
+
+    Caveat found in review (Oct 19): with ``value="random"`` torchvision fills the box
+    with N(0, 1) noise, and it runs here *before* Normalize, so the patch spans roughly
+    -4..+4 in pixel units where real pixels span 0..1 (-20..+16 after Normalize, against
+    -2.1..+2.6 for any real image). It is kept unchanged so every number reported so far
+    stays comparable; ``InRangeErasing`` below tests the same boxes with valid pixels.
+    """
+    return T.RandomErasing(p=1.0, scale=ERASE_SCALE, ratio=ERASE_RATIO, value="random")
 
 
-CORRUPTIONS = ("clean", "colorjitter", "blur", "erasing", "combined")
+class InRangeErasing:
+    """Occlusion with the exact box ``_random_erasing`` would draw, but valid pixels.
+
+    The RNG is consumed exactly as ``RandomErasing.forward`` consumes it (one draw for
+    the p check, then ``get_params`` with ``value=None``, which draws the box size, the
+    Gaussian fill and then the box position), so under the same per-sample seed the box
+    is identical and only the fill differs:
+
+    ``black``    a solid black patch, an opaque object in front of the leaf.
+    ``noise01``  uniform noise in [0, 1], a textured but physically possible patch.
+    """
+
+    def __init__(self, fill: str) -> None:
+        if fill not in ("black", "noise01"):
+            raise ValueError(f"unknown fill {fill!r}")
+        self.fill = fill
+
+    def __call__(self, img: torch.Tensor) -> torch.Tensor:
+        torch.rand(1)  # RandomErasing.forward's p check, kept for RNG alignment
+        i, j, h, w, v = T.RandomErasing.get_params(
+            img, scale=ERASE_SCALE, ratio=ERASE_RATIO, value=None)
+        if h == img.shape[-2] and w == img.shape[-1]:
+            return img  # get_params found no box; RandomErasing leaves the image as is
+        patch = torch.zeros_like(v) if self.fill == "black" else torch.rand_like(v)
+        out = img.clone()
+        out[..., i:i + h, j:j + w] = patch
+        return out
+
+
+CORRUPTIONS = ("clean", "colorjitter", "blur", "erasing", "combined",
+               "erasing_black", "erasing_noise01")
 
 
 class DeterministicCorruption:
@@ -134,6 +175,10 @@ class DeterministicCorruption:
             self.pil_ops.append(_gaussian_blur())
         if name in ("erasing", "combined"):
             self.tensor_ops.append(_random_erasing())
+        if name == "erasing_black":
+            self.tensor_ops.append(InRangeErasing("black"))
+        if name == "erasing_noise01":
+            self.tensor_ops.append(InRangeErasing("noise01"))
 
     def __call__(self, img, index: int | None = None):
         if index is not None:

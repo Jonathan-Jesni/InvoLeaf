@@ -62,6 +62,7 @@ def build_model(cfg: dict, num_classes: int) -> nn.Module:
         ffn_ratio=cfg.get("ffn_ratio", 2.0),
         ffn_init=cfg.get("ffn_init", "slice"),
         cls_mode=cfg.get("cls_mode", "identity"),
+        ffn_lr=cfg.get("ffn_lr", "new"),
     )
 
 

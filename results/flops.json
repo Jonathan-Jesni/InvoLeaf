@@ -1,0 +1,211 @@
+{
+  "unit": "GMACs",
+  "input_size": [
+    1,
+    3,
+    224,
+    224
+  ],
+  "models": {
+    "resnet50": {
+      "params": {
+        "total": 23528522,
+        "trainable": 23528522,
+        "total_m": 23.529
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "unit": "GMACs",
+        "fvcore_error": "No module named 'fvcore'",
+        "thop_gmacs": 4.1317,
+        "involution_analytic_gmacs": 0.0,
+        "attention_analytic_gmacs": 0.0
+      }
+    },
+    "vit_b16_baseline": {
+      "params": {
+        "total": 85806346,
+        "trainable": 85806346,
+        "total_m": 85.806
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "unit": "GMACs",
+        "fvcore_error": "No module named 'fvcore'",
+        "thop_gmacs": 16.8477,
+        "involution_analytic_gmacs": 0.0,
+        "attention_analytic_gmacs": 0.7153
+      }
+    },
+    "agritl_vit": {
+      "params": {
+        "total": 99998986,
+        "trainable": 99998986,
+        "total_m": 99.999
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "unit": "GMACs",
+        "fvcore_error": "No module named 'fvcore'",
+        "thop_gmacs": 19.6437,
+        "involution_analytic_gmacs": 0.0,
+        "attention_analytic_gmacs": 1.4307
+      }
+    },
+    "involeaf_b16": {
+      "params": {
+        "total": 64697674,
+        "trainable": 64697674,
+        "total_m": 64.698
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "unit": "GMACs",
+        "fvcore_error": "No module named 'fvcore'",
+        "thop_gmacs": 12.6793,
+        "involution_analytic_gmacs": 0.0885,
+        "attention_analytic_gmacs": 0.7153
+      }
+    },
+    "vit_s16_baseline": {
+      "params": {
+        "total": 21669514,
+        "trainable": 21669514,
+        "total_m": 21.67
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "unit": "GMACs",
+        "fvcore_error": "No module named 'fvcore'",
+        "thop_gmacs": 4.2408,
+        "involution_analytic_gmacs": 0.0,
+        "attention_analytic_gmacs": 0.3577
+      }
+    },
+    "involeaf_s16": {
+      "params": {
+        "total": 16395946,
+        "trainable": 16395946,
+        "total_m": 16.396
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "unit": "GMACs",
+        "fvcore_error": "No module named 'fvcore'",
+        "thop_gmacs": 3.1987,
+        "involution_analytic_gmacs": 0.0443,
+        "attention_analytic_gmacs": 0.3577
+      }
+    },
+    "abl_variant_pure": {
+      "params": {
+        "total": 36358474,
+        "trainable": 36358474,
+        "total_m": 36.358
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "unit": "GMACs",
+        "fvcore_error": "No module named 'fvcore'",
+        "thop_gmacs": 7.1019,
+        "involution_analytic_gmacs": 0.0885,
+        "attention_analytic_gmacs": 0.7153
+      }
+    },
+    "abl_variant_parallel": {
+      "params": {
+        "total": 93027658,
+        "trainable": 93027658,
+        "total_m": 93.028
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "unit": "GMACs",
+        "fvcore_error": "No module named 'fvcore'",
+        "thop_gmacs": 18.2567,
+        "involution_analytic_gmacs": 0.0885,
+        "attention_analytic_gmacs": 0.7153
+      }
+    },
+    "abl_placement_first11": {
+      "params": {
+        "total": 66456730,
+        "trainable": 66456730,
+        "total_m": 66.457
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "unit": "GMACs",
+        "fvcore_error": "No module named 'fvcore'",
+        "thop_gmacs": 13.0267,
+        "involution_analytic_gmacs": 0.0811,
+        "attention_analytic_gmacs": 0.7153
+      }
+    },
+    "abl_kernel_k3": {
+      "params": {
+        "total": 60250954,
+        "trainable": 60250954,
+        "total_m": 60.251
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "unit": "GMACs",
+        "fvcore_error": "No module named 'fvcore'",
+        "thop_gmacs": 11.8123,
+        "involution_analytic_gmacs": 0.0163,
+        "attention_analytic_gmacs": 0.7153
+      }
+    }
+  }
+}

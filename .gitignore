@@ -21,6 +21,9 @@ results/*
 !results/*.json
 # Interpretability arrays (Grad-CAM, kernel maps, ~2 MB) from analyze_mechanism.py.
 !results/interp_*.npz
+# Results replaced by a corrected rerun, kept for the record. make_tables.py only reads
+# results/*.json, so nothing in here reaches a table.
+!results/superseded/
 runs/
 wandb/
 *.log

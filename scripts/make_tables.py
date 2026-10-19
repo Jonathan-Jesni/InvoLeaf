@@ -69,37 +69,56 @@ def training_table() -> str:
 def efficiency_table() -> str:
     """Cost metrics. Grouped by device, because latency is not portable."""
     bench = _load("benchmark*.json")
-    if not bench:
+    flops_path = REPO / "results" / "flops.json"
+    macs = (json.loads(flops_path.read_text(encoding="utf-8"))["models"]
+            if flops_path.exists() else {})
+    if not bench and not macs:
         return "_no benchmark results yet_\n"
+
+    def gmacs(name: str, legacy: dict | None = None) -> str:
+        if name in macs and macs[name]["flops"].get("total_gmacs") is not None:
+            return f"{macs[name]['flops']['total_gmacs']:.2f}"
+        if legacy and legacy.get("fvcore_gflops") is not None:
+            # Pre-Oct-19 benchmark: fvcore MACs plus an involution term in FLOPs (2x),
+            # attention missing. Shown only until results/flops.json exists.
+            inv = legacy.get("involution_analytic_gflops", 0.0) / 2
+            return f"{legacy['fvcore_gflops'] + inv:.2f} (no attention)"
+        return "n/a"
 
     chunks = []
     for record in bench:
         d = record["device"]
+        batch = next(iter(record["models"].values()))["train_memory"].get("batch_size", "?")
         rows = []
         for name, m in record["models"].items():
-            flops = m["flops"]
-            counted = flops.get("fvcore_gflops")
-            extra = flops.get("involution_analytic_gflops", 0.0)
-            total = f"{counted + extra:.2f}" if counted is not None else "n/a"
             rows.append([
                 name,
                 f"{m['params']['total_m']}M",
-                total,
+                gmacs(name, m["flops"]),
                 m["latency_gpu"]["median_ms"],
-                m["latency_cpu"]["median_ms"],
                 m["train_memory"]["peak_gb"] or m["train_memory"].get("status", "-"),
             ])
         chunks.append(
             f"**{d['name']}** ({d['backend']}, torch {d['torch_version']}, "
-            f"amp {d['amp_dtype']})\n\n"
-            + _md_table(
-                ["model", "params", "GFLOPs", "GPU ms", "CPU ms", "peak train GB"], rows
-            )
-            + "\nGFLOPs include an analytic term for the involution multiply-accumulate, "
-              "which FLOP counters do not handle. Latency is measured at batch 1 and is "
-              "not comparable across devices.\n"
+            f"amp {d['amp_dtype']}, peak memory at training batch {batch})\n\n"
+            + _md_table(["model", "params", "GMACs", "GPU ms", "peak train GB"], rows)
         )
-    return "\n".join(chunks)
+    if macs:
+        rows = [[name, f"{m['params']['total_m']}M", gmacs(name),
+                 m["flops"]["attention_analytic_gmacs"],
+                 m["flops"]["involution_analytic_gmacs"]]
+                for name, m in macs.items()]
+        chunks.append(
+            "**Cost of every architecture** (`results/flops.json`)\n\n"
+            + _md_table(["model", "params", "GMACs", "of which attention",
+                         "of which involution"], rows))
+    return "\n".join(chunks) + (
+        "\nGMACs are multiply-accumulates (the unit usually quoted as \"FLOPs\" for ViTs) "
+        "at 224x224, batch 1: fvcore's count plus two terms it cannot see, the attention "
+        "matmuls and the involution multiply-accumulate, added analytically. GPU latency "
+        "is batch 1 and not comparable across devices. Cloud CPU latency is omitted: those "
+        "timings were not credible (ViT-B 5.5 s per image).\n"
+    )
 
 
 SEED_NOTE = (
@@ -119,12 +138,17 @@ def _cell(values: list[float], scale: float = 1.0, digits: int = 4) -> str:
     return f"{mean(values):.{digits}f} ± {stdev(values):.{digits}f}"
 
 
-def _evals_by_model() -> dict[str, list[dict]]:
-    """Evaluation records grouped by config name, so seeds of one model share a row."""
+def _evals_by_model(maize: bool = False) -> dict[str, list[dict]]:
+    """Evaluation records grouped by config name, so seeds of one model share a row.
+
+    Tomato and maize are kept apart: different test sets, and a maize row beside the
+    tomato rows would read as the same benchmark.
+    """
     grouped: dict[str, list[dict]] = defaultdict(list)
     for record in _load("eval_*.json"):
         name = record["config"].get("name", Path(record["checkpoint"]).stem)
-        grouped[name].append(record)
+        if name.startswith("maize_") == maize:
+            grouped[name].append(record)
     return dict(sorted(grouped.items()))
 
 
@@ -132,13 +156,23 @@ def _seeds(group: list[dict]) -> str:
     return ", ".join(str(s) for s in sorted(r["config"].get("seed", "?") for r in group))
 
 
-def robustness_table() -> str:
+OCCLUSION_NOTE = (
+    "\n`erasing` fills the box with N(0,1) noise added before normalisation, far outside "
+    "the valid pixel range; it is kept so earlier numbers stay comparable. "
+    "`erasing_black` and `erasing_noise01` use the same boxes, filled with a solid black "
+    "patch and with uniform noise in [0,1]. `-` means the run was evaluated before those "
+    "two tests existed.\n"
+)
+
+
+def robustness_table(maize: bool = False) -> str:
     """Accuracy under each corruption, one row per model, averaged over seeds."""
-    grouped = _evals_by_model()
+    grouped = _evals_by_model(maize)
     if not grouped:
         return "_no evaluation results yet_\n"
 
-    corruptions = ["clean", "colorjitter", "blur", "erasing", "combined"]
+    corruptions = ["clean", "colorjitter", "blur", "erasing", "combined",
+                   "erasing_black", "erasing_noise01"]
     rows = []
     for name, group in grouped.items():
         robs = [r.get("robustness", {}) for r in group]
@@ -153,11 +187,11 @@ def robustness_table() -> str:
         rows.append(row)
     return _md_table(
         ["model", "seeds"] + corruptions + ["clean-combined drop (pp)"], rows
-    ) + SEED_NOTE
+    ) + SEED_NOTE + OCCLUSION_NOTE
 
 
-def resolution_table() -> str:
-    grouped = _evals_by_model()
+def resolution_table(maize: bool = False) -> str:
+    grouped = _evals_by_model(maize)
     if not grouped:
         return "_no evaluation results yet_\n"
     resolutions = ["128", "200", "224"]
@@ -236,6 +270,8 @@ def main() -> None:
         ("Robustness (AgriTL-ViT Table 17 protocol)", robustness_table()),
         ("Resolution", resolution_table()),
         ("Cross-domain generalisation", cross_domain_table()),
+        ("Second crop: maize robustness", robustness_table(maize=True)),
+        ("Second crop: maize resolution", resolution_table(maize=True)),
     ]
     body = "# InvoLeaf results\n\nGenerated by `scripts/make_tables.py` from `results/*.json`. Do not edit by hand.\n\n"
     body += "\n".join(f"## {title}\n\n{content}\n" for title, content in sections)

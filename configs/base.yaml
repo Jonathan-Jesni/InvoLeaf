@@ -22,7 +22,7 @@ lr_head: 1.0e-3       # classifier
 
 # --- batching ---------------------------------------------------------------------
 # effective_batch is the hyperparameter and is held constant across machines.
-# batch_size is a memory detail: 16 on the 8 GB RTX 5050, 64 on the 32 GB W7800.
+# batch_size is a memory detail: 16 on the 8 GB RTX 5050, 64 on the 48 GB W7900D.
 # accum_steps = effective_batch / batch_size is derived, never set by hand.
 effective_batch: 64
 batch_size: 16

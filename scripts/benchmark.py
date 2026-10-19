@@ -3,9 +3,12 @@
 
     python scripts/benchmark.py --all
     python scripts/benchmark.py --config configs/involeaf_b16.yaml
+    python scripts/benchmark.py --flops-only        # CPU, no weights: results/flops.json
 
 Latency is device-specific and the results file records which backend produced it.
-Numbers from the RTX 5050 and the W7800 must never be placed in the same table.
+Numbers from the RTX 5050 and the W7900D must never be placed in the same table.
+MACs and parameters are not device-specific, so --flops-only runs anywhere (the laptop
+is fine) and make_tables.py prefers its numbers over the MACs inside benchmark.json.
 """
 
 from __future__ import annotations
@@ -22,7 +25,7 @@ from involeaf.models.registry import build_model  # noqa: E402
 from involeaf.utils import device as dev  # noqa: E402
 from involeaf.utils.config import load_config  # noqa: E402
 from involeaf.utils.logging import get_logger  # noqa: E402
-from involeaf.utils.profile import full_profile  # noqa: E402
+from involeaf.utils.profile import count_flops, count_parameters, full_profile  # noqa: E402
 
 log = get_logger()
 
@@ -33,6 +36,17 @@ DEFAULT_SET = [
     "configs/involeaf_b16.yaml",
 ]
 
+# MACs are cheap to count, so the --flops-only table covers every architecture the
+# report discusses, not just the four headline models.
+FLOPS_SET = DEFAULT_SET + [
+    "configs/vit_s16_baseline.yaml",
+    "configs/involeaf_s16.yaml",
+    "configs/ablations/variant_pure.yaml",
+    "configs/ablations/variant_parallel.yaml",
+    "configs/ablations/placement_first11.yaml",
+    "configs/ablations/kernel_k3.yaml",
+]
+
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
@@ -41,14 +55,22 @@ def main() -> None:
     ap.add_argument("--all", action="store_true", help="benchmark the four headline models")
     ap.add_argument("--num-classes", type=int, default=10)
     ap.add_argument("--train-batch", type=int, default=16)
-    ap.add_argument("--out", default="results/benchmark.json")
+    ap.add_argument("--out", default=None,
+                    help="default results/benchmark.json, or results/flops.json")
+    ap.add_argument("--flops-only", action="store_true",
+                    help="parameters and MACs only, on CPU without weights")
     ap.add_argument("--no-pretrained", action="store_true",
                     help="skip weight download; cost metrics do not depend on weights")
     args = ap.parse_args()
 
+    if args.flops_only:
+        flops_only(args.config or FLOPS_SET, args.num_classes,
+                   REPO / (args.out or "results/flops.json"))
+        return
+
     configs = args.config or (DEFAULT_SET if args.all else None)
     if not configs:
-        ap.error("pass --all or one or more --config paths")
+        ap.error("pass --all, --flops-only or one or more --config paths")
 
     device = dev.resolve_device()
     amp_dtype = dev.amp_dtype_for(device)
@@ -70,7 +92,26 @@ def main() -> None:
         log.info(f"{cfg['name']}: {p}M params, {lat} ms/img, peak train mem {mem} GB")
         del model
 
-    dest = REPO / args.out
+    dest = REPO / (args.out or "results/benchmark.json")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(out, indent=2), encoding="utf-8")
+    log.info(f"wrote {dest}")
+
+
+def flops_only(configs: list[str], num_classes: int, dest: Path) -> None:
+    out = {"unit": "GMACs", "input_size": [1, 3, 224, 224], "models": {}}
+    for path in configs:
+        cfg = load_config(REPO / path if not Path(path).is_absolute() else path)
+        cfg["pretrained"] = False
+        model = build_model(cfg, num_classes)
+        out["models"][cfg["name"]] = {"params": count_parameters(model),
+                                      "flops": count_flops(model)}
+        f = out["models"][cfg["name"]]["flops"]
+        log.info(f"{cfg['name']:<24} {out['models'][cfg['name']]['params']['total_m']:>8}M  "
+                 f"{f.get('total_gmacs', 'n/a')} GMACs (attention "
+                 f"{f['attention_analytic_gmacs']}, involution "
+                 f"{f['involution_analytic_gmacs']})")
+        del model
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(out, indent=2), encoding="utf-8")
     log.info(f"wrote {dest}")

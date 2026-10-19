@@ -1,0 +1,7 @@
+# The FFN of InvoLeaf is sliced from pretrained weights but, by default, trains at the
+# new-module rate (1e-4), ten times the rate the baseline ViT's MLP gets (1e-5). This
+# run keeps it at the pretrained rate, so any colour or field-photo gap that remains
+# can be attributed to involution rather than to a faster-moving FFN.
+_base_: ../involeaf_b16.yaml
+name: abl_ffn_lr_backbone
+ffn_lr: backbone

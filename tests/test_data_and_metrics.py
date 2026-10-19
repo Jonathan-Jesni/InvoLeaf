@@ -192,8 +192,47 @@ def test_corruption_does_not_disturb_the_global_rng():
 def test_corruption_actually_changes_the_image():
     img = textured_image()
     clean = build_eval_transform("clean")(img)
-    for name in ("colorjitter", "blur", "erasing", "combined"):
+    for name in ("colorjitter", "blur", "erasing", "combined",
+                 "erasing_black", "erasing_noise01"):
         assert not torch.allclose(DeterministicCorruption(name)(img, index=0), clean)
+
+
+def _box(corrupted: torch.Tensor, clean: torch.Tensor) -> tuple[int, int, int, int]:
+    """Bounding box (top, left, bottom, right) of the pixels that differ."""
+    rows, cols = torch.nonzero((corrupted - clean).abs().sum(0) > 1e-6, as_tuple=True)
+    return rows.min().item(), cols.min().item(), rows.max().item(), cols.max().item()
+
+
+@pytest.mark.parametrize("fill", ["erasing_black", "erasing_noise01"])
+@pytest.mark.parametrize("index", [0, 7, 123])
+def test_in_range_erasing_uses_the_same_box(fill, index):
+    """Only the fill may differ from the original occlusion test, never the box."""
+    img = textured_image()
+    clean = build_eval_transform("clean")(img)
+    original = DeterministicCorruption("erasing")(img, index=index)
+    in_range = DeterministicCorruption(fill)(img, index=index)
+    assert _box(in_range, clean) == _box(original, clean)
+
+
+@pytest.mark.parametrize("fill", ["erasing_black", "erasing_noise01"])
+def test_in_range_erasing_stays_in_the_valid_pixel_range(fill):
+    """The point of the variant: the patch is a pixel a camera could record."""
+    img = textured_image()
+    out = DeterministicCorruption(fill)(img, index=3)
+    mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+    std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
+    pixels = out * std + mean
+    assert pixels.min() >= -1e-5 and pixels.max() <= 1 + 1e-5
+
+
+def test_original_erasing_is_out_of_range():
+    """Documents the caveat in _random_erasing(): its patch is not a valid image."""
+    img = textured_image()
+    out = DeterministicCorruption("erasing")(img, index=3)
+    mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+    std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
+    pixels = out * std + mean
+    assert pixels.min() < -1 or pixels.max() > 2
 
 
 def test_native_resolution_rejects_sizes_not_divisible_by_the_patch_size():

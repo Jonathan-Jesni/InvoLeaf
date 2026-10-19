@@ -164,6 +164,43 @@ def test_param_groups_cover_every_trainable_parameter():
     assert grouped == trainable, "some parameters would never be optimised"
 
 
+def test_parallel_variant_starts_as_its_ffn_alone():
+    """The capacity control must start as the pretrained block: the involution branch
+    outputs zero at step 0, so the slot computes FFN(x) for every token."""
+    ffn = InvoLeafFFN(dim=32, variant="parallel", num_prefix_tokens=1, kernel_size=3)
+    x = torch.randn(2, 1 + 16, 32)
+    assert torch.allclose(ffn(x), ffn.ffn(x), atol=1e-6)
+
+
+def test_parallel_involution_branch_still_trains():
+    """A zero kernel must not be a dead one: span.weight gets a gradient at step 0."""
+    ffn = InvoLeafFFN(dim=32, variant="parallel", num_prefix_tokens=0, kernel_size=3)
+    ffn(torch.randn(2, 16, 32)).sum().backward()
+    assert ffn.involution.span.weight.grad.abs().sum() > 0
+
+
+def test_ffn_lr_default_counts_the_ffn_as_new():
+    """The behaviour every run so far used: the sliced FFN trains at the new-module LR."""
+    model = build_involeaf(backbone=BACKBONE, pretrained=False, num_classes=10)
+    new = new_parameter_names(model)
+    assert "blocks.0.mlp.ffn.fc1.weight" in new
+    assert "blocks.0.mlp.involution.span.weight" in new
+
+
+def test_ffn_lr_backbone_moves_the_ffn_to_the_pretrained_group():
+    from involeaf.models.registry import param_groups
+
+    model = build_involeaf(backbone=BACKBONE, pretrained=False, num_classes=10,
+                           ffn_lr="backbone")
+    new = new_parameter_names(model)
+    assert "blocks.0.mlp.ffn.fc1.weight" not in new
+    assert "blocks.0.mlp.involution.span.weight" in new
+    groups = {g["name"]: {id(p) for p in g["params"]}
+              for g in param_groups(model, {"lr": 1e-4})}
+    fc1 = dict(model.named_parameters())["blocks.0.mlp.ffn.fc1.weight"]
+    assert id(fc1) in groups["pretrained"]
+
+
 def test_backward_pass_reaches_involution():
     model = build_involeaf(backbone=BACKBONE, pretrained=False, num_classes=10)
     model(torch.randn(2, 3, 224, 224)).sum().backward()

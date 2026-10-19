@@ -35,7 +35,8 @@ from the block. Hence three variants, of which only the first is a naive swap:
 
 ``parallel``  x + FFN_r4(norm2(x)) + Inv(norm2(x))
               Capacity-added control, isolating "did involution help, or did more
-              parameters help?"
+              parameters help?" Its involution starts at zero output, so at step 0
+              the block is exactly the pretrained block.
 
 All three are drop-in replacements for ``block.mlp``, because every variant is a
 function of ``norm2(x)`` alone. Nothing else in the block is touched.
@@ -97,12 +98,15 @@ class InvoLeafFFN(nn.Module):
         ffn_ratio: float = 2.0,
         cls_mode: str = "identity",
         drop: float = 0.0,
+        ffn_lr: str = "new",
     ) -> None:
         super().__init__()
         if variant not in VARIANTS:
             raise ValueError(f"variant must be one of {VARIANTS}, got {variant!r}")
         if cls_mode not in ("identity", "linear"):
             raise ValueError(f"unknown cls_mode {cls_mode!r}")
+        if ffn_lr not in ("new", "backbone"):
+            raise ValueError(f"ffn_lr must be 'new' or 'backbone', got {ffn_lr!r}")
 
         self.dim = dim
         self.variant = variant
@@ -125,10 +129,13 @@ class InvoLeafFFN(nn.Module):
             self.ffn = Mlp(dim, hidden_features=int(dim * ffn_ratio), drop=drop)
         else:  # parallel
             self.ffn = Mlp(dim, hidden_features=int(dim * 4), drop=drop)
-
-        # Everything in this module is freshly initialised inside a pretrained
-        # encoder, so it needs its own learning rate (see new_parameter_names).
-        self._involeaf_new = True
+            # The parallel variant is the capacity control: "pretrained block plus an
+            # involution branch". It must therefore start as exactly the pretrained
+            # block, which needs the added branch to output zero, not the identity that
+            # delta initialisation gives (that would add norm2(x) to the residual stream
+            # in every block at step 0). Runs before 2026-10-19 lacked this.
+            if delta_init:
+                self.involution.zero_init_()
 
         # Prefix tokens skip the spatial op. "linear" gives them a parallel channel-mix
         # so they are not simply frozen relative to the patch tokens.
@@ -136,6 +143,18 @@ class InvoLeafFFN(nn.Module):
         if cls_mode == "linear":
             nn.init.zeros_(self.cls_proj.weight)
             nn.init.zeros_(self.cls_proj.bias)
+
+        # Learning-rate group (see new_parameter_names). By default everything in this
+        # module counts as new, including the FFN even though it is sliced from
+        # pretrained weights, so it trains at the new-module rate (10x the rate of the
+        # baseline ViT's MLP). ffn_lr="backbone" keeps the FFN at the pretrained rate,
+        # which isolates that difference from the effect of involution itself.
+        self.ffn_lr = ffn_lr
+        if ffn_lr == "new" or self.ffn is None:
+            self._involeaf_new = True
+        else:
+            mark_new(self.involution)
+            mark_new(self.cls_proj)
 
     @staticmethod
     def _grid_hw(num_patches: int) -> tuple[int, int]:
@@ -224,6 +243,7 @@ def build_involeaf(
     ffn_ratio: float = 2.0,
     ffn_init: str = "slice",
     cls_mode: str = "identity",
+    ffn_lr: str = "new",
     dynamic_img_size: bool = True,
     **timm_kwargs,
 ) -> nn.Module:
@@ -257,6 +277,7 @@ def build_involeaf(
             delta_init=delta_init,
             ffn_ratio=ffn_ratio,
             cls_mode=cls_mode,
+            ffn_lr=ffn_lr,
         )
         if pretrained and new_mlp.ffn is not None and isinstance(old_mlp, Mlp):
             init_ffn_from_pretrained(new_mlp.ffn, old_mlp, mode=ffn_init)
@@ -275,6 +296,7 @@ def build_involeaf(
         "ffn_ratio": ffn_ratio,
         "ffn_init": ffn_init,
         "cls_mode": cls_mode,
+        "ffn_lr": ffn_lr,
     }
     return model
 

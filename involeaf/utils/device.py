@@ -2,7 +2,7 @@
 
 Nothing else in the codebase may call ``.cuda()``, check ``torch.cuda.is_available()``
 or hardcode a dtype. This module exists because the project runs on an NVIDIA RTX 5050
-(CUDA) through September and moves to an AMD Radeon PRO W7800 (ROCm) in October; every
+(CUDA) through September and moves to an AMD Radeon PRO W7900D (ROCm) in October; every
 result row records which backend produced it so the two are never silently compared.
 """
 

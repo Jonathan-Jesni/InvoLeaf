@@ -1,7 +1,7 @@
 """Dataset built from a committed split file.
 
 Splits live in ``splits/*.json`` and are version-controlled, so every run -- across
-machines, across the September RTX 5050 and the October W7800 -- sees exactly the same
+machines, across the September RTX 5050 and the October W7900D -- sees exactly the same
 train/val/test partition. Nothing regenerates a split at training time.
 """
 

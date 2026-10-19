@@ -410,14 +410,29 @@ def main() -> None:
         i = np.nanmean([s["mean"] for s in e["stage_drift_inside"] if s["mean"] is not None])
         log.info(f"  {name:<17} outside {o:.3f}  inside {i:.3f}")
     inv = drift["involeaf_b16"]
+    # Kernels that never left their initialisation (the last block's, which no gradient
+    # reaches) are constant, so their drift is exactly zero under every corruption.
+    # Averaging them in would understate kernel drift; the per-block JSON keeps them.
+    trained = [b for b in range(len(inv["colorjitter"]["kernel_drift"]))
+               if any((inv[c]["kernel_drift"][b]["mean"] or 0) > 1e-6 for c in CONDS)]
+    skipped = sorted(set(range(len(inv["colorjitter"]["kernel_drift"]))) - set(trained))
+    if skipped:
+        log.info(f"kernel averages exclude block(s) {[b + 1 for b in skipped]}: "
+                 f"constant kernels, never trained")
+
+    def kmean(entries):
+        vals = [entries[b]["mean"] for b in trained if entries[b]["mean"] is not None]
+        return float(np.mean(vals)) if vals else float("nan")
+
     for c in CONDS:
-        k = np.mean([s["mean"] for s in inv[c]["kernel_drift"]])
-        amp = np.mean([a for a in inv[c]["kernel_amplification"] if a is not None])
-        log.info(f"InvoLeaf kernels, {c:<11}: drift {k:.3f}, kernel/input drift {amp:.2f}")
+        amp = [inv[c]["kernel_amplification"][b] for b in trained]
+        amp = np.mean([a for a in amp if a is not None]) if amp else float("nan")
+        log.info(f"InvoLeaf kernels, {c:<11}: drift {kmean(inv[c]['kernel_drift']):.3f}, "
+                 f"kernel/input drift {amp:.2f}")
     e = inv["erasing"]
-    log.info("InvoLeaf kernels under occlusion: outside {:.3f}, inside {:.3f}".format(
-        np.nanmean([s["mean"] for s in e["kernel_drift_outside"] if s["mean"] is not None]),
-        np.nanmean([s["mean"] for s in e["kernel_drift_inside"] if s["mean"] is not None])))
+    log.info(f"InvoLeaf kernels under occlusion: outside "
+             f"{kmean(e['kernel_drift_outside']):.3f}, inside "
+             f"{kmean(e['kernel_drift_inside']):.3f}")
 
 
 if __name__ == "__main__":

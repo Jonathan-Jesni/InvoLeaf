@@ -59,9 +59,9 @@ remaining () {                  # whole minutes left in this session's budget
 }
 
 # Conservative minutes for one run INCLUDING start-up tuning and its evaluation, from
-# the timings measured on the W7900 (ResNet ~12 min, ViT-B ~14, InvoLeaf ~45 with the
-# unfold implementation). AgriTL-ViT and the variants have not been timed yet, so their
-# numbers are deliberately generous. Override one with e.g. EST_agritl_vit=30.
+# the timings measured on the W7900: ResNet ~12 min, ViT-B ~14, InvoLeaf ~45 (unfold),
+# AgriTL ~25, ViT-S ~6, InvoLeaf-S K=3/5/7 ~9/14/21, pure ~41, parallel ~48, plus about
+# a minute of evaluation each. Override one with e.g. EST_agritl_vit=30.
 estimate () {
   local var="EST_$1"
   if [[ -n "${!var:-}" ]]; then echo "${!var}"; return; fi
@@ -70,11 +70,20 @@ estimate () {
     vit_b16_baseline)     echo 22 ;;
     involeaf_b16)         echo 60 ;;
     agritl_vit)           echo 40 ;;
-    vit_s16_baseline)     echo 15 ;;
-    abl_s16_k*)           echo 30 ;;
-    abl_variant_pure)     echo 50 ;;
-    abl_variant_parallel) echo 65 ;;
+    vit_s16_baseline)     echo 10 ;;
+    abl_s16_k3)           echo 15 ;;
+    abl_s16_k5)           echo 20 ;;
+    abl_s16_k7)           echo 28 ;;
+    abl_variant_pure)     echo 48 ;;
+    abl_variant_parallel) echo 55 ;;
     benchmark)            echo 15 ;;
+    abl_placement_every3|abl_placement_last4) echo 30 ;;
+    abl_placement_last6)  echo 35 ;;
+    abl_kernel_k3)        echo 35 ;;
+    maize_resnet50|maize_vit_b16_baseline) echo 8 ;;
+    maize_agritl_vit)     echo 12 ;;
+    maize_involeaf_b16)   echo 15 ;;
+    abl_*)                echo 55 ;;
     *)                    echo 45 ;;
   esac
 }
@@ -148,8 +157,8 @@ train () {                      # train <config> <base-name> [KEY=VALUE ...]
   fi
 }
 
-evaluate () {                   # evaluate <base-name>
-  local name="${1}_seed${SEED}"
+evaluate () {                   # evaluate <base-name> [eval_robustness.py args ...]
+  local name="${1}_seed${SEED}"; shift
   [[ $STOP -eq 1 ]] && return 0
   if [[ -f "results/eval_${name}.json" ]]; then
     echo ">> skip   eval ${name} (done)"; SKIPPED+=("eval:${name}"); return 0
@@ -168,7 +177,7 @@ evaluate () {                   # evaluate <base-name>
     echo ">> stop   ${left} min left, not starting eval ${name}"; STOP=1; return 0
   fi
   echo ">> eval   ${name}  ($(date +%H:%M))"
-  if python scripts/eval_robustness.py --ckpt "$ckpt" \
+  if python scripts/eval_robustness.py --ckpt "$ckpt" "$@" \
        > "${LOGDIR}/eval_${name}.log" 2>&1; then
     echo "   done   eval ${name}"; RAN+=("eval:${name}")
   else
@@ -209,6 +218,40 @@ phase_E () {
   run configs/ablations/variant_parallel.yaml abl_variant_parallel
 }
 
+phase_P () {
+  echo "=== Phase P - where involution goes (ViT-B) ==="
+  # Planned before any results. first11 drops the last block's involution, which never
+  # trains (no gradient reaches it; see configs/ablations/placement_first11.yaml).
+  run configs/ablations/placement_every3.yaml  abl_placement_every3
+  run configs/ablations/placement_last4.yaml   abl_placement_last4
+  run configs/ablations/placement_last6.yaml   abl_placement_last6
+  run configs/ablations/placement_first11.yaml abl_placement_first11
+}
+
+phase_D () {
+  echo "=== Phase D - design choices of the operator (ViT-B) ==="
+  # First: is InvoLeaf's colour/field gap involution, or its FFN training at the
+  # new-module rate (10x the baseline MLP's)? See configs/ablations/ffn_lr_backbone.yaml.
+  run configs/ablations/ffn_lr_backbone.yaml abl_ffn_lr_backbone
+  run configs/ablations/no_delta_init.yaml  abl_no_delta_init
+  run configs/ablations/kernel_k3.yaml      abl_kernel_k3
+  run configs/ablations/norm_bn.yaml        abl_norm_bn
+  run configs/ablations/ffninit_random.yaml abl_ffninit_random
+  run configs/ablations/groups_gc64.yaml    abl_groups_gc64
+  run configs/ablations/groups_gc768.yaml   abl_groups_gc768
+}
+
+phase_M () {
+  echo "=== Phase M - second crop: PlantVillage maize, four headline models ==="
+  # Same protocol on a different crop (AgriTL-ViT reports 97.2% on maize). PlantDoc is
+  # tomato-only, so the cross-domain test is skipped: its labels are tomato classes.
+  local m
+  for m in resnet50 vit_b16_baseline involeaf_b16 agritl_vit; do
+    train "configs/${m}.yaml" "maize_${m}" "split_file=splits/plantvillage_maize.json"
+    evaluate "maize_${m}" --skip-cross-domain
+  done
+}
+
 phase_F () {
   echo "=== Phase F - efficiency benchmark (one machine only) ==="
   [[ $STOP -eq 1 ]] && return 0
@@ -241,6 +284,10 @@ usage: SEED=<n> [BUDGET_MIN=<minutes>] bash scripts/run_queue.sh <phase> [phase.
   C  ViT-S baseline + kernel-size ablation, each evaluated
   E  pure / parallel variant ablation, each evaluated
   F  efficiency benchmark (one person only)
+  P  placement ablation on ViT-B (every3, last4, last6, first11)
+  D  design ablations on ViT-B (FFN at the pretrained LR, no delta init, K=3,
+     BatchNorm, random FFN init, group size 64 and 768)
+  M  maize: ResNet-50, ViT-B, InvoLeaf, AgriTL-ViT on a second crop
 
 Run the same command at the start of every session; it picks up what is left.
 USAGE
@@ -253,7 +300,8 @@ stage_data
 for phase in "$@"; do
   case "$phase" in
     S|s) phase_S ;; C|c) phase_C ;; E|e) phase_E ;; F|f) phase_F ;;
-    *) echo "unknown phase '${phase}' - expected S, C, E or F"; exit 1 ;;
+    P|p) phase_P ;; D|d) phase_D ;; M|m) phase_M ;;
+    *) echo "unknown phase '${phase}' - expected S, C, E, F, P, D or M"; exit 1 ;;
   esac
 done
 

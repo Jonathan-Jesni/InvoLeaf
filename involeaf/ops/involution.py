@@ -6,7 +6,7 @@ Reimplementation of the operator from:
 
 We deliberately do NOT depend on the authors' repository. Its fast path requires
 mmcv plus a CuPy CUDA kernel, neither of which survives this project's move from
-CUDA (RTX 5050) to ROCm (Radeon PRO W7800) in October. Everything below is plain
+CUDA (RTX 5050) to ROCm (Radeon PRO W7900D) in October. Everything below is plain
 PyTorch -- pad, slice, multiply, add -- and therefore portable to any backend.
 
 Two forward implementations are provided and are numerically equivalent (enforced by
@@ -134,6 +134,20 @@ class Involution2d(nn.Module):
         bias = torch.zeros(self.groups, self.kernel_size**2)
         bias[:, self.kernel_size**2 // 2] = 1.0
         self.span.bias.copy_(bias.reshape(-1))
+
+    @torch.no_grad()
+    def zero_init_(self) -> None:
+        """Initialise so the operator outputs exactly zero at step zero.
+
+        For a branch that is *added* next to a pretrained path (the ``parallel``
+        variant), identity is the wrong starting point: it would add the branch's input
+        to the residual stream and perturb the pretrained block. A zero kernel leaves the
+        block exactly pretrained. As with ``delta_init_``, span.weight still receives a
+        gradient (it depends on the incoming activation), so the branch grows from zero
+        after the first optimiser step.
+        """
+        nn.init.zeros_(self.span.weight)
+        nn.init.zeros_(self.span.bias)
 
     def kernel(self, x: torch.Tensor) -> torch.Tensor:
         """Generate the per-location kernels, shape (B, G, K*K, H_out, W_out).

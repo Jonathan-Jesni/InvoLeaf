@@ -20,4 +20,5 @@ impl: unfold
 delta_init: true       # start as an exact spatial identity
 ffn_ratio: 2.0
 ffn_init: slice        # seed the narrowed FFN from the pretrained wide one
+ffn_lr: new            # FFN trains at the new-module LR (1e-4); see ablations/ffn_lr_backbone
 cls_mode: identity

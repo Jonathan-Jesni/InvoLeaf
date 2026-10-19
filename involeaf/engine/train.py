@@ -3,8 +3,8 @@
 Effective batch size is pinned by gradient accumulation
 --------------------------------------------------------
 ``batch_size * accum_steps`` is held at a fixed ``effective_batch`` regardless of what
-fits in VRAM. This project trains on an 8 GB RTX 5050 through September and a 32 GB
-Radeon PRO W7800 from October; without pinning, the two halves of the experiment would
+fits in VRAM. This project trains on an 8 GB RTX 5050 through September and a 48 GB
+Radeon PRO W7900D from October; without pinning, the two halves of the experiment would
 use different effective batch sizes and could not be compared. The physical batch size
 is a memory detail, the effective batch size is a hyperparameter.
 
@@ -248,9 +248,14 @@ def train(
             device, amp_dtype, accum, float(cfg.get("grad_clip", 1.0)), limit_batches,
         )
         val = evaluate(model, val_loader, device, train_ds.class_names, amp_dtype)
+        # One rate per parameter group, named, so the log cannot be misread: runs before
+        # 2026-10-19 logged a bare "lr" that was the head's rate (peak 1e-3), not the
+        # rate of the new modules (peak 1e-4).
+        rates = {f"lr_{g['name']}": g["lr"] for g in optimizer.param_groups
+                 if g.get("name") in ("head", "new")}
         logger.log_epoch(
             epoch, **stats, val_acc=val["accuracy"], val_macro_f1=val["macro_f1"],
-            lr=optimizer.param_groups[0]["lr"],
+            **rates,
         )
 
         # Checkpoint selection uses macro-F1 on the *validation* split. The test split

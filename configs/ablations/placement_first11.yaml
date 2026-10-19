@@ -1,0 +1,9 @@
+# Involution in blocks 1-11, plain pretrained MLP in block 12.
+# Not chosen from test results: in the last block the CLS token bypasses involution and
+# no later block carries patch tokens back to it, so no gradient reaches block 12's
+# involution and its kernels stay at their identity initialisation (measured: ~0.99 of
+# the kernel weight on the centre tap). This removes those ~0.6M dead parameters and
+# checks that nothing else changes.
+_base_: ../involeaf_b16.yaml
+name: abl_placement_first11
+inv_blocks: first11

@@ -1,7 +1,7 @@
-"""Cost measurement: parameters, FLOPs, latency, peak memory.
+"""Cost measurement: parameters, MACs ("FLOPs"), latency, peak memory.
 
 Every measurement is stamped with the device record from ``involeaf.utils.device`` so
-that September RTX 5050 numbers and October W7800 numbers are never merged into one
+that September RTX 5050 numbers and October W7900D numbers are never merged into one
 table. Latency in particular is not portable between backends.
 
 A standing caveat for the write-up: involution's FLOP savings do not fully translate
@@ -28,14 +28,21 @@ def count_parameters(model: nn.Module) -> dict[str, int]:
 
 
 def count_flops(model: nn.Module, input_size: tuple[int, ...] = (1, 3, 224, 224)) -> dict:
-    """FLOPs via fvcore, cross-checked against thop when both are installed.
+    """Multiply-accumulates (MACs) via fvcore, completed analytically.
 
-    Both tools miss operations they have no handler for; the involution kernel
-    generation is standard 1x1 convolution and is counted, but the elementwise
-    multiply-accumulate over K*K offsets is not. The returned dict therefore includes an
-    analytic correction term rather than pretending the tool output is complete.
+    fvcore counts one fused multiply-add as one "flop", so its total is MACs, the unit
+    timm and most ViT papers quote as "FLOPs" (ViT-B/16: ~17.6 G). Two terms it has no
+    handler for are added analytically, in the same unit:
+
+    - the involution multiply-accumulate over K*K offsets (its kernel generation is
+      ordinary 1x1 convolution and is counted);
+    - the two attention matmuls inside ``scaled_dot_product_attention`` (Q K^T and
+      A V), which fvcore skips for every ViT, and twice per block for AgriTL-ViT.
+
+    ``total_gmacs`` is the figure to report. Before 2026-10-19 the involution term was in
+    FLOPs (2x) and attention was missing, as the older ``*_gflops`` keys show.
     """
-    result: dict = {"input_size": list(input_size)}
+    result: dict = {"input_size": list(input_size), "unit": "GMACs"}
     model = model.eval()
     x = torch.randn(*input_size)
 
@@ -45,7 +52,7 @@ def count_flops(model: nn.Module, input_size: tuple[int, ...] = (1, 3, 224, 224)
         fca = FlopCountAnalysis(model, x)
         fca.unsupported_ops_warnings(False)
         fca.uncalled_modules_warnings(False)
-        result["fvcore_gflops"] = round(fca.total() / 1e9, 4)
+        result["fvcore_gmacs"] = round(fca.total() / 1e9, 4)
         result["fvcore_uncounted"] = sorted(set(fca.unsupported_ops().keys()))
     except Exception as exc:                        # noqa: BLE001
         result["fvcore_error"] = str(exc)
@@ -58,30 +65,46 @@ def count_flops(model: nn.Module, input_size: tuple[int, ...] = (1, 3, 224, 224)
     except Exception as exc:                        # noqa: BLE001
         result["thop_error"] = str(exc)
 
-    result["involution_analytic_gflops"] = round(
-        _involution_multiply_accumulate_flops(model, input_size) / 1e9, 4
-    )
+    result["involution_analytic_gmacs"] = round(
+        _involution_macs(model, input_size) / 1e9, 4)
+    result["attention_analytic_gmacs"] = round(
+        _attention_macs(model, input_size) / 1e9, 4)
+    if "fvcore_gmacs" in result:
+        result["total_gmacs"] = round(
+            result["fvcore_gmacs"] + result["involution_analytic_gmacs"]
+            + result["attention_analytic_gmacs"], 4)
     return result
 
 
-def _involution_multiply_accumulate_flops(
-    model: nn.Module, input_size: tuple[int, ...]
-) -> float:
-    """The multiply-accumulate term that FLOP counters miss.
-
-    Per involution: C * K*K * H * W multiplies plus the same number of adds.
-    """
-    from involeaf.ops.involution import Involution2d
-
+def _token_grid(model: nn.Module, input_size: tuple[int, ...]) -> int:
     patch = getattr(getattr(model, "patch_embed", None), "patch_size", (16, 16))
     stride = patch[0] if isinstance(patch, (tuple, list)) else patch
-    h = w = input_size[-1] // stride
+    return input_size[-1] // stride
 
-    total = 0.0
-    for m in model.modules():
-        if isinstance(m, Involution2d):
-            total += 2.0 * m.channels * (m.kernel_size ** 2) * h * w
-    return total
+
+def _involution_macs(model: nn.Module, input_size: tuple[int, ...]) -> float:
+    """Per involution: one multiply-accumulate per channel, kernel tap and location."""
+    from involeaf.ops.involution import Involution2d
+
+    side = _token_grid(model, input_size)
+    return float(sum(m.channels * m.kernel_size ** 2 * side * side
+                     for m in model.modules() if isinstance(m, Involution2d)))
+
+
+def _attention_macs(model: nn.Module, input_size: tuple[int, ...]) -> float:
+    """Per attention module: Q K^T and A V, each N*N*D multiply-accumulates.
+
+    Counted per Attention module, so AgriTL-ViT's second attention in every block is
+    included. The qkv and output projections are ordinary linears that fvcore counts.
+    """
+    try:
+        from timm.models.vision_transformer import Attention
+    except ImportError:                              # pragma: no cover
+        return 0.0
+    side = _token_grid(model, input_size)
+    n = side * side + getattr(model, "num_prefix_tokens", 0)
+    return float(sum(2 * n * n * m.qkv.in_features
+                     for m in model.modules() if isinstance(m, Attention)))
 
 
 @torch.no_grad()
