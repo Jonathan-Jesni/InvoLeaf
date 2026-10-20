@@ -65,8 +65,11 @@ CONDITIONS = [
     ("Clean", lambda r: r["robustness"]["clean"]["accuracy"]),
     ("Colour shift", lambda r: r["robustness"]["colorjitter"]["accuracy"]),
     ("Blur", lambda r: r["robustness"]["blur"]["accuracy"]),
-    ("Occlusion", lambda r: r["robustness"]["erasing"]["accuracy"]),
-    ("All combined", lambda r: r["robustness"]["combined"]["accuracy"]),
+    # Occlusion and the combined test use the in-range black patch. The original
+    # "erasing" patch is out-of-range noise (see involeaf/data/transforms.py) and only
+    # appears in fig7, which shows what it does to ResNet.
+    ("Occlusion\n(black patch)", lambda r: r["robustness"]["erasing_black"]["accuracy"]),
+    ("Combined\n(black patch)", lambda r: r["robustness"]["combined_black"]["accuracy"]),
     ("Field photos\n(PlantDoc)", lambda r: r["cross_domain"]["accuracy"]),
 ]
 
@@ -214,8 +217,10 @@ def fig_robustness(evals, models: list[str], title: str, name: str, out: Path) -
         means, errs = [], []
         for _, get in CONDITIONS:
             s = _stats(evals[m], get)
-            means.append(s[0] * 100 if s else 0.0)
-            errs.append(s[1] * 100 if s else 0.0)
+            # A run evaluated before a test existed has no bar there, rather than a
+            # zero-height bar that would read as 0% accuracy.
+            means.append(s[0] * 100 if s else float("nan"))
+            errs.append(s[1] * 100 if s else float("nan"))
         offsets = [x - 0.4 + width * (i + 0.5) for x in xs]
         n = len(evals[m])
         # A surface-coloured edge gives the 2px gap between adjacent bars.
@@ -263,7 +268,7 @@ def fig_tradeoff(evals, out: Path) -> None:
     for m, (x, y, xe, ye) in pts.items():
         _point(ax, x, y, xe, ye, m)
     _label_points(ax, {m: p[:2] for m, p in pts.items()})
-    ax.set_xlabel("Accuracy under occlusion (%)")
+    ax.set_xlabel("Accuracy under occlusion, black patch (%)")
     ax.set_ylabel("Accuracy under colour shift (%)")
     ax.set_title("Occlusion vs colour-shift robustness")
     ax.margins(x=0.12, y=0.12)
@@ -375,42 +380,55 @@ def fig_training_curves(train, out: Path) -> None:
 
 
 def fig_resnet_collapse(evals, out: Path) -> None:
-    """Where ResNet-50's predictions go, clean vs occluded."""
+    """Where ResNet-50's predictions go: clean, out-of-range noise patch, black patch.
+
+    The round-1 "collapse to Yellow Leaf Curl" happens only with the out-of-range noise
+    patch; a black patch in the same box barely moves the predictions. The figure is
+    the evidence for that methodological finding.
+    """
     records = evals.get("resnet50")
     if not records:
         print("  skipped fig7_resnet_occlusion: no ResNet results")
         return
 
-    def share(condition: str) -> list[float]:
+    def share(condition: str) -> tuple[list[float], int] | None:
         per_seed = []
         for r in records:
+            if condition not in r["robustness"]:
+                continue
             cm = r["robustness"][condition]["confusion_matrix"]
             cols = [sum(row[j] for row in cm) for j in range(len(cm))]
             total = sum(cols)
             per_seed.append([c / total * 100 for c in cols])
-        return [mean(s[j] for s in per_seed) for j in range(len(per_seed[0]))]
+        if not per_seed:
+            return None
+        return [mean(s[j] for s in per_seed) for j in range(len(per_seed[0]))], len(per_seed)
 
     names = list(records[0]["robustness"]["clean"]["per_class"].keys())
     labels = [SHORT_CLASS.get(n.split("___", 1)[-1], n) for n in names]
-    clean, occluded = share("clean"), share("erasing")
+    series = [("clean", "Clean test images", MUTED),
+              ("erasing", "Out-of-range noise patch", YELLOW),
+              ("erasing_black", "Black patch, same boxes", INK_2)]
+    series = [(label, color, share(cond)) for cond, label, color in series]
+    series = [(label, color, sh) for label, color, sh in series if sh]
 
     fig, ax = plt.subplots(figsize=(10, 4.4))
     xs = range(len(labels))
-    w = 0.38
-    ax.bar([x - w / 2 for x in xs], clean, w, color=MUTED, edgecolor=SURFACE,
-           linewidth=1.2, label="Clean test images", zorder=2)
-    ax.bar([x + w / 2 for x in xs], occluded, w, color=YELLOW, edgecolor=SURFACE,
-           linewidth=1.2, label="Same images, occluded", zorder=2)
-    top = max(range(len(occluded)), key=lambda j: occluded[j])
-    ax.annotate(f"{occluded[top]:.1f}%", (top + w / 2, occluded[top]), xytext=(0, 4),
-                textcoords="offset points", ha="center", fontsize=9, color=INK)
+    w = 0.8 / len(series)
+    for i, (label, color, (values, n)) in enumerate(series):
+        offs = [x - 0.4 + w * (i + 0.5) for x in xs]
+        ax.bar(offs, values, w, color=color, edgecolor=SURFACE, linewidth=1.2,
+               label=f"{label}  ({_seed_note(n)})", zorder=2)
+        if label.startswith("Out-of-range"):
+            top = max(range(len(values)), key=lambda j: values[j])
+            ax.annotate(f"{values[top]:.1f}%", (offs[top], values[top]), xytext=(0, 4),
+                        textcoords="offset points", ha="center", fontsize=9, color=INK)
     ax.set_xticks(list(xs))
     ax.set_xticklabels(labels, rotation=30, ha="right")
     ax.set_ylim(0, 110)
     ax.set_ylabel("Share of all predictions (%)")
     ax.xaxis.grid(False)
-    ax.set_title(f"ResNet-50 under occlusion: where its predictions go "
-                 f"({_seed_note(len(records))})")
+    ax.set_title("ResNet-50's occlusion collapse comes from the out-of-range patch")
     ax.legend(loc="upper left")
     _save(fig, out, "fig7_resnet_occlusion")
 
