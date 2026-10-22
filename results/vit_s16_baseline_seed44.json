@@ -1,0 +1,224 @@
+{
+  "run_name": "vit_s16_baseline_seed44",
+  "config": {
+    "split_file": "splits/plantvillage_tomato.json",
+    "image_size": 224,
+    "workers": 4,
+    "seed": 44,
+    "epochs": 20,
+    "warmup_epochs": 2,
+    "label_smoothing": 0.1,
+    "grad_clip": 1.0,
+    "weight_decay": 0.05,
+    "min_lr_factor": 0.01,
+    "lr": 0.0001,
+    "lr_backbone": 1e-05,
+    "lr_head": 0.001,
+    "effective_batch": 64,
+    "batch_size": 64,
+    "device": "auto",
+    "amp": "auto",
+    "pretrained": true,
+    "checkpoint_dir": "/root/involeaf_local/checkpoints",
+    "name": "vit_s16_baseline",
+    "arch": "timm",
+    "backbone": "vit_small_patch16_224.augreg_in21k_ft_in1k"
+  },
+  "device": {
+    "device": "cuda",
+    "backend": "rocm",
+    "name": "AMD Radeon Pro W7900D",
+    "total_memory_gb": 48.0,
+    "amp_dtype": "bfloat16",
+    "torch_version": "2.13.0+rocm10.0.0",
+    "platform": "Linux 6.8.0-79-generic"
+  },
+  "started_at": "2026-10-20T20:15:40",
+  "epochs": [
+    {
+      "epoch": 0,
+      "train_loss": 1.3640555004880885,
+      "train_acc": 0.6598800505050505,
+      "val_acc": 0.9467889908256881,
+      "val_macro_f1": 0.9346446559639752,
+      "lr_head": 0.0005025252525252525
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.6294924348893792,
+      "train_acc": 0.9739583333333334,
+      "val_acc": 0.984954128440367,
+      "val_macro_f1": 0.9822271332112198,
+      "lr_head": 0.001
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.5648213781491674,
+      "train_acc": 0.991082702020202,
+      "val_acc": 0.9933944954128441,
+      "val_macro_f1": 0.9936341882980877,
+      "lr_head": 0.000992479837741043
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.5385470402361167,
+      "train_acc": 0.9966066919191919,
+      "val_acc": 0.9963302752293578,
+      "val_macro_f1": 0.995288671016006,
+      "lr_head": 0.0009701478472890247
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.5267118227602255,
+      "train_acc": 0.9969223484848485,
+      "val_acc": 0.9970642201834863,
+      "val_macro_f1": 0.9965133836818053,
+      "lr_head": 0.0009336825748732972
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.518756423032645,
+      "train_acc": 0.9984217171717171,
+      "val_acc": 0.9974311926605505,
+      "val_macro_f1": 0.9971751073677246,
+      "lr_head": 0.0008841919993438941
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.5133575670646898,
+      "train_acc": 0.9987373737373737,
+      "val_acc": 0.9974311926605505,
+      "val_macro_f1": 0.9969815123048816,
+      "lr_head": 0.0008231798667948369
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.5109757600408612,
+      "train_acc": 0.9988162878787878,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9986203027140762,
+      "lr_head": 0.0007524999999999999
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.5081956109615288,
+      "train_acc": 0.999447601010101,
+      "val_acc": 0.9974311926605505,
+      "val_macro_f1": 0.9971010539400375,
+      "lr_head": 0.0006742999709462061
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.5065546601709693,
+      "train_acc": 0.9997632575757576,
+      "val_acc": 0.9977981651376147,
+      "val_macro_f1": 0.9976934307738915,
+      "lr_head": 0.0005909558479451306
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.5051813465778274,
+      "train_acc": 0.9997632575757576,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9989003352062493,
+      "lr_head": 0.000505
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.5047285532710528,
+      "train_acc": 0.9998421717171717,
+      "val_acc": 0.998165137614679,
+      "val_macro_f1": 0.997855910948657,
+      "lr_head": 0.0004190441520548695
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.5042482048574121,
+      "train_acc": 0.9997632575757576,
+      "val_acc": 0.9985321100917431,
+      "val_macro_f1": 0.9983575918158726,
+      "lr_head": 0.00033570002905379407
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.5037309406983732,
+      "train_acc": 0.9997632575757576,
+      "val_acc": 0.9985321100917431,
+      "val_macro_f1": 0.9984211212324017,
+      "lr_head": 0.00025750000000000013
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.5035045240262542,
+      "train_acc": 0.9998421717171717,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9988649490780052,
+      "lr_head": 0.00018682013320516302
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.5029190041200079,
+      "train_acc": 0.9999210858585859,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9988649490780052,
+      "lr_head": 0.00012580800065610596
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.5031629770693152,
+      "train_acc": 0.9996843434343434,
+      "val_acc": 0.9985321100917431,
+      "val_macro_f1": 0.9984211212324017,
+      "lr_head": 7.631742512670284e-05
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.5028421129241134,
+      "train_acc": 0.9998421717171717,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9986844740411888,
+      "lr_head": 3.9852152710975386e-05
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.5026057991716597,
+      "train_acc": 0.9999210858585859,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9988565078769447,
+      "lr_head": 1.7520162258957028e-05
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.5027648361042293,
+      "train_acc": 0.9998421717171717,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9988565078769447,
+      "lr_head": 1e-05
+    }
+  ],
+  "num_classes": 10,
+  "class_names": [
+    "Tomato___Bacterial_spot",
+    "Tomato___Early_blight",
+    "Tomato___Late_blight",
+    "Tomato___Leaf_Mold",
+    "Tomato___Septoria_leaf_spot",
+    "Tomato___Spider_mites Two-spotted_spider_mite",
+    "Tomato___Target_Spot",
+    "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+    "Tomato___Tomato_mosaic_virus",
+    "Tomato___healthy"
+  ],
+  "effective_batch": 64,
+  "accum_steps": 1,
+  "params_total": 21669514,
+  "model_meta": {
+    "backbone": "vit_small_patch16_224.augreg_in21k_ft_in1k",
+    "architecture": "baseline"
+  },
+  "best_val_macro_f1": 0.9989003352062493,
+  "best_epoch": 10,
+  "checkpoint": "/root/involeaf_local/checkpoints/vit_s16_baseline_seed44.pth",
+  "peak_train_memory_gb": 2.5312752723693848,
+  "finished_at": "2026-10-20T20:21:23"
+}

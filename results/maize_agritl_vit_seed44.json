@@ -1,0 +1,245 @@
+{
+  "run_name": "maize_agritl_vit_seed44",
+  "config": {
+    "split_file": "splits/plantvillage_maize.json",
+    "image_size": 224,
+    "workers": 4,
+    "seed": 44,
+    "epochs": 20,
+    "warmup_epochs": 2,
+    "label_smoothing": 0.1,
+    "grad_clip": 1.0,
+    "weight_decay": 0.05,
+    "min_lr_factor": 0.01,
+    "lr": 0.0001,
+    "lr_backbone": 1e-05,
+    "lr_head": 0.001,
+    "effective_batch": 64,
+    "batch_size": 64,
+    "device": "auto",
+    "amp": "auto",
+    "pretrained": true,
+    "checkpoint_dir": "/root/involeaf_local/checkpoints",
+    "name": "maize_agritl_vit",
+    "arch": "agritl_vit",
+    "backbone": "vit_base_patch16_224.augreg_in21k_ft_in1k",
+    "dual_attention": true,
+    "resnet_module": true,
+    "dropout": 0.1
+  },
+  "device": {
+    "device": "cuda",
+    "backend": "rocm",
+    "name": "AMD Radeon Pro W7900D",
+    "total_memory_gb": 48.0,
+    "amp_dtype": "bfloat16",
+    "torch_version": "2.13.0+rocm10.0.0",
+    "platform": "Linux 6.8.0-79-generic"
+  },
+  "started_at": "2026-10-20T18:37:09",
+  "epochs": [
+    {
+      "epoch": 0,
+      "train_loss": 1.0598968466122944,
+      "train_acc": 0.6491815476190477,
+      "val_acc": 0.8408304498269896,
+      "val_macro_f1": 0.8100714252108352,
+      "lr_head": 0.0005119047619047619,
+      "lr_new": 5.119047619047619e-05
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.6137991079262325,
+      "train_acc": 0.8802083333333334,
+      "val_acc": 0.8996539792387543,
+      "val_macro_f1": 0.8366701325788395,
+      "lr_head": 0.001,
+      "lr_new": 0.0001
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.5996790883086976,
+      "train_acc": 0.8876488095238095,
+      "val_acc": 0.8581314878892734,
+      "val_macro_f1": 0.8217678856632684,
+      "lr_head": 0.000992479837741043,
+      "lr_new": 9.92479837741043e-05
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.5240482907919657,
+      "train_acc": 0.9215029761904762,
+      "val_acc": 0.9221453287197232,
+      "val_macro_f1": 0.8820863993430365,
+      "lr_head": 0.0009701478472890247,
+      "lr_new": 9.701478472890248e-05
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.4678381873028619,
+      "train_acc": 0.9501488095238095,
+      "val_acc": 0.9775086505190311,
+      "val_macro_f1": 0.9686806655513831,
+      "lr_head": 0.0009336825748732972,
+      "lr_new": 9.336825748732972e-05
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.44625050680977957,
+      "train_acc": 0.9620535714285714,
+      "val_acc": 0.9826989619377162,
+      "val_macro_f1": 0.9748299624127439,
+      "lr_head": 0.0008841919993438941,
+      "lr_new": 8.84191999343894e-05
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.43121724611236933,
+      "train_acc": 0.9702380952380952,
+      "val_acc": 0.9775086505190311,
+      "val_macro_f1": 0.9670014534656965,
+      "lr_head": 0.0008231798667948369,
+      "lr_new": 8.23179866794837e-05
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.4131009557417461,
+      "train_acc": 0.9754464285714286,
+      "val_acc": 0.9792387543252595,
+      "val_macro_f1": 0.9712178065836602,
+      "lr_head": 0.0007524999999999999,
+      "lr_new": 7.525e-05
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.4095296959082286,
+      "train_acc": 0.9787946428571429,
+      "val_acc": 0.9775086505190311,
+      "val_macro_f1": 0.9670014534656965,
+      "lr_head": 0.0006742999709462061,
+      "lr_new": 6.742999709462061e-05
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.3984224498271942,
+      "train_acc": 0.9795386904761905,
+      "val_acc": 0.9826989619377162,
+      "val_macro_f1": 0.9755987992569034,
+      "lr_head": 0.0005909558479451306,
+      "lr_new": 5.909558479451306e-05
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.39142813214233946,
+      "train_acc": 0.9847470238095238,
+      "val_acc": 0.986159169550173,
+      "val_macro_f1": 0.9798639699301951,
+      "lr_head": 0.000505,
+      "lr_new": 5.05e-05
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.4042512213899976,
+      "train_acc": 0.9795386904761905,
+      "val_acc": 0.9826989619377162,
+      "val_macro_f1": 0.9746530281182408,
+      "lr_head": 0.0004190441520548695,
+      "lr_new": 4.190441520548695e-05
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.39298286679245176,
+      "train_acc": 0.9832589285714286,
+      "val_acc": 0.9792387543252595,
+      "val_macro_f1": 0.9694538943939601,
+      "lr_head": 0.00033570002905379407,
+      "lr_new": 3.357000290537941e-05
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.38688309277806965,
+      "train_acc": 0.9840029761904762,
+      "val_acc": 0.986159169550173,
+      "val_macro_f1": 0.9801306958671847,
+      "lr_head": 0.00025750000000000013,
+      "lr_new": 2.5750000000000013e-05
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.37971452801000505,
+      "train_acc": 0.9877232142857143,
+      "val_acc": 0.986159169550173,
+      "val_macro_f1": 0.9802562302562303,
+      "lr_head": 0.00018682013320516302,
+      "lr_new": 1.8682013320516302e-05
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.37534614900747937,
+      "train_acc": 0.9899553571428571,
+      "val_acc": 0.986159169550173,
+      "val_macro_f1": 0.9802562302562303,
+      "lr_head": 0.00012580800065610596,
+      "lr_new": 1.2580800065610596e-05
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.37400647572108675,
+      "train_acc": 0.9892113095238095,
+      "val_acc": 0.986159169550173,
+      "val_macro_f1": 0.9801306958671847,
+      "lr_head": 7.631742512670284e-05,
+      "lr_new": 7.631742512670284e-06
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.37402852802049547,
+      "train_acc": 0.9914434523809523,
+      "val_acc": 0.9878892733564014,
+      "val_macro_f1": 0.9825577532171255,
+      "lr_head": 3.9852152710975386e-05,
+      "lr_new": 3.985215271097539e-06
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.3708943561429069,
+      "train_acc": 0.9910714285714286,
+      "val_acc": 0.9896193771626297,
+      "val_macro_f1": 0.9852825745682889,
+      "lr_head": 1.7520162258957028e-05,
+      "lr_new": 1.7520162258957028e-06
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.37319143613179523,
+      "train_acc": 0.9914434523809523,
+      "val_acc": 0.9878892733564014,
+      "val_macro_f1": 0.9825577532171255,
+      "lr_head": 1e-05,
+      "lr_new": 1.0000000000000002e-06
+    }
+  ],
+  "num_classes": 4,
+  "class_names": [
+    "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+    "Corn_(maize)___Common_rust_",
+    "Corn_(maize)___Northern_Leaf_Blight",
+    "Corn_(maize)___healthy"
+  ],
+  "effective_batch": 64,
+  "accum_steps": 1,
+  "params_total": 99994372,
+  "model_meta": {
+    "backbone": "vit_base_patch16_224.augreg_in21k_ft_in1k",
+    "architecture": "agritl_vit",
+    "dual_attention": true,
+    "resnet_module": true,
+    "dropout": 0.1,
+    "reproduction_note": "Reproduced from the textual description; module wiring is an interpretation documented in involeaf/models/agritl_vit.py."
+  },
+  "best_val_macro_f1": 0.9852825745682889,
+  "best_epoch": 18,
+  "checkpoint": "/root/involeaf_local/checkpoints/maize_agritl_vit_seed44.pth",
+  "peak_train_memory_gb": 8.76631498336792,
+  "finished_at": "2026-10-20T18:42:55"
+}
