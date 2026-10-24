@@ -1,0 +1,218 @@
+{
+  "run_name": "maize_vit_b16_baseline_seed43",
+  "config": {
+    "split_file": "splits/plantvillage_maize.json",
+    "image_size": 224,
+    "workers": 4,
+    "seed": 43,
+    "epochs": 20,
+    "warmup_epochs": 2,
+    "label_smoothing": 0.1,
+    "grad_clip": 1.0,
+    "weight_decay": 0.05,
+    "min_lr_factor": 0.01,
+    "lr": 0.0001,
+    "lr_backbone": 1e-05,
+    "lr_head": 0.001,
+    "effective_batch": 64,
+    "batch_size": 64,
+    "device": "auto",
+    "amp": "auto",
+    "pretrained": true,
+    "checkpoint_dir": "/root/involeaf_local/checkpoints",
+    "name": "maize_vit_b16_baseline",
+    "arch": "timm",
+    "backbone": "vit_base_patch16_224.augreg_in21k_ft_in1k"
+  },
+  "device": {
+    "device": "cuda",
+    "backend": "rocm",
+    "name": "AMD Radeon Pro W7900D",
+    "total_memory_gb": 48.0,
+    "amp_dtype": "bfloat16",
+    "torch_version": "2.13.0+rocm10.0.0",
+    "platform": "Linux 6.8.0-79-generic"
+  },
+  "started_at": "2026-10-24T22:13:14",
+  "epochs": [
+    {
+      "epoch": 0,
+      "train_loss": 0.9661894717386791,
+      "train_acc": 0.7291666666666666,
+      "val_acc": 0.9619377162629758,
+      "val_macro_f1": 0.9469768466270835,
+      "lr_head": 0.0005119047619047619
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.422564739272708,
+      "train_acc": 0.9776785714285714,
+      "val_acc": 0.9896193771626297,
+      "val_macro_f1": 0.9853693428125542,
+      "lr_head": 0.001
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.39873404729933964,
+      "train_acc": 0.9858630952380952,
+      "val_acc": 0.9896193771626297,
+      "val_macro_f1": 0.9851030656150874,
+      "lr_head": 0.000992479837741043
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.3855118460598446,
+      "train_acc": 0.9936755952380952,
+      "val_acc": 0.9913494809688581,
+      "val_macro_f1": 0.9876981957353745,
+      "lr_head": 0.0009701478472890247
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.3745571665820621,
+      "train_acc": 0.9973958333333334,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9926632029738484,
+      "lr_head": 0.0009336825748732972
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.36863926407836733,
+      "train_acc": 0.9973958333333334,
+      "val_acc": 0.9930795847750865,
+      "val_macro_f1": 0.9901281151281152,
+      "lr_head": 0.0008841919993438941
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.36657150373572395,
+      "train_acc": 0.9973958333333334,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9925727866904338,
+      "lr_head": 0.0008231798667948369
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.3624089849846704,
+      "train_acc": 0.9992559523809523,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9926189174412247,
+      "lr_head": 0.0007524999999999999
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.3601119326693671,
+      "train_acc": 0.9988839285714286,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9926632029738484,
+      "lr_head": 0.0006742999709462061
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.35819631814956665,
+      "train_acc": 0.9988839285714286,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9926189174412247,
+      "lr_head": 0.0005909558479451306
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.35330745648770107,
+      "train_acc": 1.0,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9926189174412247,
+      "lr_head": 0.000505
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.35318581688971745,
+      "train_acc": 1.0,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9926189174412247,
+      "lr_head": 0.0004190441520548695
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.353160702756473,
+      "train_acc": 1.0,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9925727866904338,
+      "lr_head": 0.00033570002905379407
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.3515198230743408,
+      "train_acc": 1.0,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9926189174412247,
+      "lr_head": 0.00025750000000000013
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.3512132146528789,
+      "train_acc": 0.9996279761904762,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9926189174412247,
+      "lr_head": 0.00018682013320516302
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.3508134697164808,
+      "train_acc": 1.0,
+      "val_acc": 0.9930795847750865,
+      "val_macro_f1": 0.9901281151281152,
+      "lr_head": 0.00012580800065610596
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.35094536202294485,
+      "train_acc": 1.0,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9925727866904338,
+      "lr_head": 7.631742512670284e-05
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.35065318856920513,
+      "train_acc": 1.0,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9926189174412247,
+      "lr_head": 3.9852152710975386e-05
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.3510266861745289,
+      "train_acc": 1.0,
+      "val_acc": 0.9930795847750865,
+      "val_macro_f1": 0.9901281151281152,
+      "lr_head": 1.7520162258957028e-05
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.35051112586543676,
+      "train_acc": 1.0,
+      "val_acc": 0.9948096885813149,
+      "val_macro_f1": 0.9926189174412247,
+      "lr_head": 1e-05
+    }
+  ],
+  "num_classes": 4,
+  "class_names": [
+    "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+    "Corn_(maize)___Common_rust_",
+    "Corn_(maize)___Northern_Leaf_Blight",
+    "Corn_(maize)___healthy"
+  ],
+  "effective_batch": 64,
+  "accum_steps": 1,
+  "params_total": 85801732,
+  "model_meta": {
+    "backbone": "vit_base_patch16_224.augreg_in21k_ft_in1k",
+    "architecture": "baseline"
+  },
+  "best_val_macro_f1": 0.9926632029738484,
+  "best_epoch": 4,
+  "checkpoint": "/root/involeaf_local/checkpoints/maize_vit_b16_baseline_seed43.pth",
+  "peak_train_memory_gb": 5.398179531097412,
+  "finished_at": "2026-10-24T22:16:37"
+}
