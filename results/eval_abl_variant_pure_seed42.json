@@ -1,0 +1,2372 @@
+{
+  "checkpoint": "/root/involeaf_local/checkpoints/abl_variant_pure_seed42.pth",
+  "config": {
+    "split_file": "splits/plantvillage_tomato.json",
+    "image_size": 224,
+    "workers": 4,
+    "seed": 42,
+    "epochs": 20,
+    "warmup_epochs": 2,
+    "label_smoothing": 0.1,
+    "grad_clip": 1.0,
+    "weight_decay": 0.05,
+    "min_lr_factor": 0.01,
+    "lr": 0.0001,
+    "lr_backbone": 1e-05,
+    "lr_head": 0.001,
+    "effective_batch": 64,
+    "batch_size": 64,
+    "device": "auto",
+    "amp": "auto",
+    "pretrained": true,
+    "checkpoint_dir": "/root/involeaf_local/checkpoints",
+    "name": "abl_variant_pure",
+    "arch": "involeaf",
+    "backbone": "vit_base_patch16_224.augreg_in21k_ft_in1k",
+    "variant": "pure",
+    "inv_blocks": "all",
+    "kernel_size": 7,
+    "group_channels": 16,
+    "reduction_ratio": 4,
+    "norm_layer": "gn",
+    "impl": "unfold",
+    "delta_init": true,
+    "ffn_ratio": 2.0,
+    "ffn_init": "slice",
+    "ffn_lr": "new",
+    "cls_mode": "identity"
+  },
+  "device": {
+    "device": "cuda",
+    "backend": "rocm",
+    "name": "AMD Radeon Pro W7900D",
+    "total_memory_gb": 48.0,
+    "amp_dtype": "bfloat16",
+    "torch_version": "2.13.0+rocm10.0.0",
+    "platform": "Linux 6.8.0-79-generic"
+  },
+  "robustness": {
+    "clean": {
+      "accuracy": 0.9864120455380095,
+      "macro_f1": 0.9827174901777228,
+      "macro_f1_present": 0.9827174901777228,
+      "classes_present": 10,
+      "classes_total": 10,
+      "weighted_f1": 0.9863974434268127,
+      "n_samples": 2723,
+      "per_class": {
+        "Tomato___Bacterial_spot": {
+          "precision": 0.9905956112852664,
+          "recall": 0.9905956112852664,
+          "f1": 0.9905956112852664,
+          "support": 319
+        },
+        "Tomato___Early_blight": {
+          "precision": 0.948051948051948,
+          "recall": 0.9733333333333334,
+          "f1": 0.9605263157894737,
+          "support": 150
+        },
+        "Tomato___Late_blight": {
+          "precision": 0.972318339100346,
+          "recall": 0.9790940766550522,
+          "f1": 0.9756944444444444,
+          "support": 287
+        },
+        "Tomato___Leaf_Mold": {
+          "precision": 0.9791666666666666,
+          "recall": 0.986013986013986,
+          "f1": 0.9825783972125436,
+          "support": 143
+        },
+        "Tomato___Septoria_leaf_spot": {
+          "precision": 1.0,
+          "recall": 0.9886792452830189,
+          "f1": 0.9943074003795066,
+          "support": 265
+        },
+        "Tomato___Spider_mites Two-spotted_spider_mite": {
+          "precision": 0.9841269841269841,
+          "recall": 0.9841269841269841,
+          "f1": 0.9841269841269841,
+          "support": 252
+        },
+        "Tomato___Target_Spot": {
+          "precision": 0.9801980198019802,
+          "recall": 0.9428571428571428,
+          "f1": 0.9611650485436893,
+          "support": 210
+        },
+        "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+          "precision": 0.9962732919254659,
+          "recall": 0.9987546699875467,
+          "f1": 0.9975124378109452,
+          "support": 803
+        },
+        "Tomato___Tomato_mosaic_virus": {
+          "precision": 0.9824561403508771,
+          "recall": 1.0,
+          "f1": 0.9911504424778761,
+          "support": 56
+        },
+        "Tomato___healthy": {
+          "precision": 0.9874476987447699,
+          "recall": 0.9915966386554622,
+          "f1": 0.989517819706499,
+          "support": 238
+        }
+      },
+      "confusion_matrix": [
+        [
+          316,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          146,
+          3,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          281,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          2
+        ],
+        [
+          0,
+          0,
+          1,
+          141,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          1,
+          262,
+          0,
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          1,
+          1,
+          0,
+          0,
+          248,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          2,
+          0,
+          4,
+          198,
+          0,
+          0,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          802,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          56,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          236
+        ]
+      ]
+    },
+    "colorjitter": {
+      "accuracy": 0.6294528094013955,
+      "macro_f1": 0.5801147218068656,
+      "macro_f1_present": 0.5801147218068656,
+      "classes_present": 10,
+      "classes_total": 10,
+      "weighted_f1": 0.6396663198736917,
+      "n_samples": 2723,
+      "per_class": {
+        "Tomato___Bacterial_spot": {
+          "precision": 0.4439461883408072,
+          "recall": 0.6206896551724138,
+          "f1": 0.5176470588235295,
+          "support": 319
+        },
+        "Tomato___Early_blight": {
+          "precision": 0.3391812865497076,
+          "recall": 0.7733333333333333,
+          "f1": 0.4715447154471545,
+          "support": 150
+        },
+        "Tomato___Late_blight": {
+          "precision": 0.6256983240223464,
+          "recall": 0.7804878048780488,
+          "f1": 0.6945736434108527,
+          "support": 287
+        },
+        "Tomato___Leaf_Mold": {
+          "precision": 0.5303030303030303,
+          "recall": 0.48951048951048953,
+          "f1": 0.509090909090909,
+          "support": 143
+        },
+        "Tomato___Septoria_leaf_spot": {
+          "precision": 0.6162361623616236,
+          "recall": 0.630188679245283,
+          "f1": 0.6231343283582089,
+          "support": 265
+        },
+        "Tomato___Spider_mites Two-spotted_spider_mite": {
+          "precision": 0.7152777777777778,
+          "recall": 0.4087301587301587,
+          "f1": 0.5202020202020202,
+          "support": 252
+        },
+        "Tomato___Target_Spot": {
+          "precision": 0.5189873417721519,
+          "recall": 0.3904761904761905,
+          "f1": 0.44565217391304346,
+          "support": 210
+        },
+        "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+          "precision": 0.9012738853503185,
+          "recall": 0.7048567870485679,
+          "f1": 0.7910552061495457,
+          "support": 803
+        },
+        "Tomato___Tomato_mosaic_virus": {
+          "precision": 0.42424242424242425,
+          "recall": 0.5,
+          "f1": 0.45901639344262296,
+          "support": 56
+        },
+        "Tomato___healthy": {
+          "precision": 0.898876404494382,
+          "recall": 0.6722689075630253,
+          "f1": 0.7692307692307693,
+          "support": 238
+        }
+      },
+      "confusion_matrix": [
+        [
+          198,
+          65,
+          12,
+          0,
+          11,
+          0,
+          4,
+          29,
+          0,
+          0
+        ],
+        [
+          11,
+          116,
+          9,
+          0,
+          3,
+          2,
+          6,
+          2,
+          1,
+          0
+        ],
+        [
+          8,
+          31,
+          224,
+          3,
+          16,
+          1,
+          0,
+          3,
+          0,
+          1
+        ],
+        [
+          4,
+          10,
+          14,
+          70,
+          26,
+          2,
+          3,
+          7,
+          7,
+          0
+        ],
+        [
+          20,
+          17,
+          27,
+          18,
+          167,
+          0,
+          3,
+          5,
+          7,
+          1
+        ],
+        [
+          22,
+          35,
+          14,
+          10,
+          5,
+          103,
+          32,
+          15,
+          12,
+          4
+        ],
+        [
+          13,
+          41,
+          13,
+          15,
+          13,
+          13,
+          82,
+          0,
+          8,
+          12
+        ],
+        [
+          150,
+          22,
+          31,
+          1,
+          13,
+          9,
+          10,
+          566,
+          1,
+          0
+        ],
+        [
+          0,
+          2,
+          4,
+          10,
+          7,
+          4,
+          1,
+          0,
+          28,
+          0
+        ],
+        [
+          20,
+          3,
+          10,
+          5,
+          10,
+          10,
+          17,
+          1,
+          2,
+          160
+        ]
+      ]
+    },
+    "blur": {
+      "accuracy": 0.8332721263312522,
+      "macro_f1": 0.7909078649716444,
+      "macro_f1_present": 0.7909078649716444,
+      "classes_present": 10,
+      "classes_total": 10,
+      "weighted_f1": 0.8291085691854873,
+      "n_samples": 2723,
+      "per_class": {
+        "Tomato___Bacterial_spot": {
+          "precision": 0.8789808917197452,
+          "recall": 0.8652037617554859,
+          "f1": 0.8720379146919431,
+          "support": 319
+        },
+        "Tomato___Early_blight": {
+          "precision": 0.6176470588235294,
+          "recall": 0.84,
+          "f1": 0.711864406779661,
+          "support": 150
+        },
+        "Tomato___Late_blight": {
+          "precision": 0.6619385342789598,
+          "recall": 0.975609756097561,
+          "f1": 0.7887323943661971,
+          "support": 287
+        },
+        "Tomato___Leaf_Mold": {
+          "precision": 0.7707006369426752,
+          "recall": 0.8461538461538461,
+          "f1": 0.8066666666666666,
+          "support": 143
+        },
+        "Tomato___Septoria_leaf_spot": {
+          "precision": 0.9783549783549783,
+          "recall": 0.8528301886792453,
+          "f1": 0.9112903225806451,
+          "support": 265
+        },
+        "Tomato___Spider_mites Two-spotted_spider_mite": {
+          "precision": 0.8715083798882681,
+          "recall": 0.6190476190476191,
+          "f1": 0.7238979118329466,
+          "support": 252
+        },
+        "Tomato___Target_Spot": {
+          "precision": 0.5721925133689839,
+          "recall": 0.5095238095238095,
+          "f1": 0.5390428211586902,
+          "support": 210
+        },
+        "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+          "precision": 0.948051948051948,
+          "recall": 1.0,
+          "f1": 0.9733333333333334,
+          "support": 803
+        },
+        "Tomato___Tomato_mosaic_virus": {
+          "precision": 0.8947368421052632,
+          "recall": 0.9107142857142857,
+          "f1": 0.9026548672566371,
+          "support": 56
+        },
+        "Tomato___healthy": {
+          "precision": 0.9919354838709677,
+          "recall": 0.5168067226890757,
+          "f1": 0.6795580110497238,
+          "support": 238
+        }
+      },
+      "confusion_matrix": [
+        [
+          276,
+          3,
+          22,
+          0,
+          1,
+          0,
+          0,
+          17,
+          0,
+          0
+        ],
+        [
+          3,
+          126,
+          18,
+          0,
+          0,
+          1,
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          280,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          19,
+          121,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          14,
+          13,
+          8,
+          226,
+          0,
+          0,
+          0,
+          3,
+          0
+        ],
+        [
+          6,
+          5,
+          36,
+          1,
+          0,
+          156,
+          29,
+          18,
+          1,
+          0
+        ],
+        [
+          28,
+          45,
+          14,
+          9,
+          0,
+          3,
+          107,
+          2,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          803,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1,
+          4,
+          0,
+          0,
+          0,
+          51,
+          0
+        ],
+        [
+          0,
+          6,
+          21,
+          17,
+          0,
+          19,
+          51,
+          1,
+          0,
+          123
+        ]
+      ]
+    },
+    "erasing": {
+      "accuracy": 0.41461623209695186,
+      "macro_f1": 0.3754368605208619,
+      "macro_f1_present": 0.3754368605208619,
+      "classes_present": 10,
+      "classes_total": 10,
+      "weighted_f1": 0.4150801158324893,
+      "n_samples": 2723,
+      "per_class": {
+        "Tomato___Bacterial_spot": {
+          "precision": 0.775,
+          "recall": 0.29153605015673983,
+          "f1": 0.42369020501138954,
+          "support": 319
+        },
+        "Tomato___Early_blight": {
+          "precision": 0.1970684039087948,
+          "recall": 0.8066666666666666,
+          "f1": 0.31675392670157065,
+          "support": 150
+        },
+        "Tomato___Late_blight": {
+          "precision": 0.8877551020408163,
+          "recall": 0.30313588850174217,
+          "f1": 0.45194805194805193,
+          "support": 287
+        },
+        "Tomato___Leaf_Mold": {
+          "precision": 0.2909090909090909,
+          "recall": 0.11188811188811189,
+          "f1": 0.16161616161616163,
+          "support": 143
+        },
+        "Tomato___Septoria_leaf_spot": {
+          "precision": 0.2187241093620547,
+          "recall": 0.9962264150943396,
+          "f1": 0.358695652173913,
+          "support": 265
+        },
+        "Tomato___Spider_mites Two-spotted_spider_mite": {
+          "precision": 0.7333333333333333,
+          "recall": 0.2619047619047619,
+          "f1": 0.38596491228070173,
+          "support": 252
+        },
+        "Tomato___Target_Spot": {
+          "precision": 0.8823529411764706,
+          "recall": 0.07142857142857142,
+          "f1": 0.13215859030837004,
+          "support": 210
+        },
+        "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+          "precision": 1.0,
+          "recall": 0.28019925280199254,
+          "f1": 0.4377431906614786,
+          "support": 803
+        },
+        "Tomato___Tomato_mosaic_virus": {
+          "precision": 1.0,
+          "recall": 0.10714285714285714,
+          "f1": 0.1935483870967742,
+          "support": 56
+        },
+        "Tomato___healthy": {
+          "precision": 0.8109965635738832,
+          "recall": 0.9915966386554622,
+          "f1": 0.8922495274102079,
+          "support": 238
+        }
+      },
+      "confusion_matrix": [
+        [
+          93,
+          150,
+          0,
+          0,
+          71,
+          0,
+          0,
+          0,
+          0,
+          5
+        ],
+        [
+          0,
+          121,
+          0,
+          0,
+          28,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          68,
+          87,
+          0,
+          115,
+          2,
+          0,
+          0,
+          0,
+          15
+        ],
+        [
+          0,
+          0,
+          0,
+          16,
+          123,
+          0,
+          0,
+          0,
+          0,
+          4
+        ],
+        [
+          0,
+          1,
+          0,
+          0,
+          264,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          36,
+          0,
+          10,
+          125,
+          66,
+          2,
+          0,
+          0,
+          13
+        ],
+        [
+          0,
+          13,
+          0,
+          0,
+          169,
+          0,
+          15,
+          0,
+          0,
+          13
+        ],
+        [
+          27,
+          225,
+          11,
+          29,
+          260,
+          21,
+          0,
+          225,
+          0,
+          5
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          50,
+          0,
+          0,
+          0,
+          6,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          236
+        ]
+      ]
+    },
+    "combined": {
+      "accuracy": 0.2967315460888726,
+      "macro_f1": 0.24035122873623,
+      "macro_f1_present": 0.24035122873623,
+      "classes_present": 10,
+      "classes_total": 10,
+      "weighted_f1": 0.279274431584864,
+      "n_samples": 2723,
+      "per_class": {
+        "Tomato___Bacterial_spot": {
+          "precision": 0.4489795918367347,
+          "recall": 0.20689655172413793,
+          "f1": 0.2832618025751073,
+          "support": 319
+        },
+        "Tomato___Early_blight": {
+          "precision": 0.128125,
+          "recall": 0.82,
+          "f1": 0.22162162162162163,
+          "support": 150
+        },
+        "Tomato___Late_blight": {
+          "precision": 0.45077720207253885,
+          "recall": 0.30313588850174217,
+          "f1": 0.3625,
+          "support": 287
+        },
+        "Tomato___Leaf_Mold": {
+          "precision": 0.4444444444444444,
+          "recall": 0.13986013986013987,
+          "f1": 0.2127659574468085,
+          "support": 143
+        },
+        "Tomato___Septoria_leaf_spot": {
+          "precision": 0.23820754716981132,
+          "recall": 0.7622641509433963,
+          "f1": 0.36298292902066487,
+          "support": 265
+        },
+        "Tomato___Spider_mites Two-spotted_spider_mite": {
+          "precision": 0.4782608695652174,
+          "recall": 0.04365079365079365,
+          "f1": 0.08,
+          "support": 252
+        },
+        "Tomato___Target_Spot": {
+          "precision": 0.3333333333333333,
+          "recall": 0.004761904761904762,
+          "f1": 0.009389671361502348,
+          "support": 210
+        },
+        "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+          "precision": 0.9476744186046512,
+          "recall": 0.20298879202988793,
+          "f1": 0.3343589743589744,
+          "support": 803
+        },
+        "Tomato___Tomato_mosaic_virus": {
+          "precision": 0.5,
+          "recall": 0.03571428571428571,
+          "f1": 0.06666666666666667,
+          "support": 56
+        },
+        "Tomato___healthy": {
+          "precision": 0.4054878048780488,
+          "recall": 0.5588235294117647,
+          "f1": 0.46996466431095407,
+          "support": 238
+        }
+      },
+      "confusion_matrix": [
+        [
+          66,
+          172,
+          14,
+          0,
+          40,
+          2,
+          0,
+          2,
+          0,
+          23
+        ],
+        [
+          1,
+          123,
+          2,
+          0,
+          19,
+          0,
+          0,
+          0,
+          0,
+          5
+        ],
+        [
+          2,
+          95,
+          87,
+          1,
+          71,
+          6,
+          0,
+          0,
+          0,
+          25
+        ],
+        [
+          1,
+          34,
+          10,
+          20,
+          68,
+          0,
+          0,
+          1,
+          0,
+          9
+        ],
+        [
+          1,
+          28,
+          9,
+          5,
+          202,
+          0,
+          0,
+          0,
+          0,
+          20
+        ],
+        [
+          11,
+          89,
+          12,
+          2,
+          92,
+          11,
+          1,
+          4,
+          0,
+          30
+        ],
+        [
+          5,
+          62,
+          3,
+          3,
+          114,
+          0,
+          1,
+          0,
+          2,
+          20
+        ],
+        [
+          55,
+          337,
+          47,
+          6,
+          129,
+          4,
+          0,
+          163,
+          0,
+          62
+        ],
+        [
+          0,
+          1,
+          1,
+          5,
+          46,
+          0,
+          0,
+          0,
+          2,
+          1
+        ],
+        [
+          5,
+          19,
+          8,
+          3,
+          67,
+          0,
+          1,
+          2,
+          0,
+          133
+        ]
+      ]
+    },
+    "erasing_black": {
+      "accuracy": 0.7836944546456115,
+      "macro_f1": 0.751563534964198,
+      "macro_f1_present": 0.751563534964198,
+      "classes_present": 10,
+      "classes_total": 10,
+      "weighted_f1": 0.7941282746410593,
+      "n_samples": 2723,
+      "per_class": {
+        "Tomato___Bacterial_spot": {
+          "precision": 1.0,
+          "recall": 0.4012539184952978,
+          "f1": 0.5727069351230425,
+          "support": 319
+        },
+        "Tomato___Early_blight": {
+          "precision": 0.2845691382765531,
+          "recall": 0.9466666666666667,
+          "f1": 0.43759630200308164,
+          "support": 150
+        },
+        "Tomato___Late_blight": {
+          "precision": 0.9236641221374046,
+          "recall": 0.8432055749128919,
+          "f1": 0.8816029143897997,
+          "support": 287
+        },
+        "Tomato___Leaf_Mold": {
+          "precision": 0.5093632958801498,
+          "recall": 0.951048951048951,
+          "f1": 0.6634146341463415,
+          "support": 143
+        },
+        "Tomato___Septoria_leaf_spot": {
+          "precision": 0.9210526315789473,
+          "recall": 0.9245283018867925,
+          "f1": 0.9227871939736346,
+          "support": 265
+        },
+        "Tomato___Spider_mites Two-spotted_spider_mite": {
+          "precision": 0.9457364341085271,
+          "recall": 0.48412698412698413,
+          "f1": 0.6404199475065617,
+          "support": 252
+        },
+        "Tomato___Target_Spot": {
+          "precision": 0.945054945054945,
+          "recall": 0.4095238095238095,
+          "f1": 0.5714285714285714,
+          "support": 210
+        },
+        "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+          "precision": 0.949569495694957,
+          "recall": 0.9613947696139477,
+          "f1": 0.9554455445544554,
+          "support": 803
+        },
+        "Tomato___Tomato_mosaic_virus": {
+          "precision": 0.9629629629629629,
+          "recall": 0.9285714285714286,
+          "f1": 0.9454545454545454,
+          "support": 56
+        },
+        "Tomato___healthy": {
+          "precision": 0.9766355140186916,
+          "recall": 0.8781512605042017,
+          "f1": 0.9247787610619469,
+          "support": 238
+        }
+      },
+      "confusion_matrix": [
+        [
+          128,
+          162,
+          3,
+          6,
+          3,
+          0,
+          0,
+          17,
+          0,
+          0
+        ],
+        [
+          0,
+          142,
+          5,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          26,
+          242,
+          9,
+          2,
+          0,
+          0,
+          6,
+          0,
+          2
+        ],
+        [
+          0,
+          3,
+          0,
+          136,
+          2,
+          0,
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          3,
+          2,
+          12,
+          245,
+          0,
+          0,
+          2,
+          1,
+          0
+        ],
+        [
+          0,
+          35,
+          7,
+          68,
+          4,
+          122,
+          4,
+          11,
+          0,
+          1
+        ],
+        [
+          0,
+          100,
+          0,
+          11,
+          7,
+          2,
+          86,
+          1,
+          1,
+          2
+        ],
+        [
+          0,
+          8,
+          2,
+          16,
+          0,
+          5,
+          0,
+          772,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          52,
+          0
+        ],
+        [
+          0,
+          19,
+          1,
+          8,
+          0,
+          0,
+          0,
+          1,
+          0,
+          209
+        ]
+      ]
+    },
+    "erasing_noise01": {
+      "accuracy": 0.8813808299669482,
+      "macro_f1": 0.8675007686334342,
+      "macro_f1_present": 0.8675007686334342,
+      "classes_present": 10,
+      "classes_total": 10,
+      "weighted_f1": 0.8871710166275114,
+      "n_samples": 2723,
+      "per_class": {
+        "Tomato___Bacterial_spot": {
+          "precision": 0.9285714285714286,
+          "recall": 0.774294670846395,
+          "f1": 0.8444444444444444,
+          "support": 319
+        },
+        "Tomato___Early_blight": {
+          "precision": 0.5176056338028169,
+          "recall": 0.98,
+          "f1": 0.6774193548387096,
+          "support": 150
+        },
+        "Tomato___Late_blight": {
+          "precision": 0.9875,
+          "recall": 0.8257839721254355,
+          "f1": 0.8994307400379506,
+          "support": 287
+        },
+        "Tomato___Leaf_Mold": {
+          "precision": 0.7848101265822784,
+          "recall": 0.8671328671328671,
+          "f1": 0.8239202657807309,
+          "support": 143
+        },
+        "Tomato___Septoria_leaf_spot": {
+          "precision": 0.7857142857142857,
+          "recall": 0.9962264150943396,
+          "f1": 0.8785357737104825,
+          "support": 265
+        },
+        "Tomato___Spider_mites Two-spotted_spider_mite": {
+          "precision": 0.9313304721030042,
+          "recall": 0.8611111111111112,
+          "f1": 0.8948453608247423,
+          "support": 252
+        },
+        "Tomato___Target_Spot": {
+          "precision": 0.8838383838383839,
+          "recall": 0.8333333333333334,
+          "f1": 0.8578431372549019,
+          "support": 210
+        },
+        "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+          "precision": 0.9985835694050992,
+          "recall": 0.8779576587795765,
+          "f1": 0.9343936381709742,
+          "support": 803
+        },
+        "Tomato___Tomato_mosaic_virus": {
+          "precision": 0.9245283018867925,
+          "recall": 0.875,
+          "f1": 0.8990825688073395,
+          "support": 56
+        },
+        "Tomato___healthy": {
+          "precision": 0.9437751004016064,
+          "recall": 0.9873949579831933,
+          "f1": 0.9650924024640657,
+          "support": 238
+        }
+      },
+      "confusion_matrix": [
+        [
+          247,
+          64,
+          1,
+          0,
+          5,
+          0,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          147,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          23,
+          237,
+          6,
+          15,
+          0,
+          0,
+          0,
+          0,
+          6
+        ],
+        [
+          0,
+          1,
+          0,
+          124,
+          15,
+          0,
+          2,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          264,
+          0,
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          6,
+          0,
+          3,
+          6,
+          217,
+          16,
+          0,
+          1,
+          3
+        ],
+        [
+          0,
+          7,
+          0,
+          1,
+          18,
+          3,
+          175,
+          0,
+          1,
+          5
+        ],
+        [
+          19,
+          36,
+          0,
+          23,
+          5,
+          12,
+          3,
+          705,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          7,
+          0,
+          0,
+          0,
+          49,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          235
+        ]
+      ]
+    },
+    "combined_black": {
+      "accuracy": 0.3885420492104297,
+      "macro_f1": 0.28464507337805905,
+      "macro_f1_present": 0.28464507337805905,
+      "classes_present": 10,
+      "classes_total": 10,
+      "weighted_f1": 0.36775435745709384,
+      "n_samples": 2723,
+      "per_class": {
+        "Tomato___Bacterial_spot": {
+          "precision": 0.6029411764705882,
+          "recall": 0.12852664576802508,
+          "f1": 0.21188630490956073,
+          "support": 319
+        },
+        "Tomato___Early_blight": {
+          "precision": 0.14320987654320988,
+          "recall": 0.7733333333333333,
+          "f1": 0.24166666666666667,
+          "support": 150
+        },
+        "Tomato___Late_blight": {
+          "precision": 0.24484536082474226,
+          "recall": 0.662020905923345,
+          "f1": 0.35747883349012227,
+          "support": 287
+        },
+        "Tomato___Leaf_Mold": {
+          "precision": 0.32335329341317365,
+          "recall": 0.3776223776223776,
+          "f1": 0.34838709677419355,
+          "support": 143
+        },
+        "Tomato___Septoria_leaf_spot": {
+          "precision": 0.59375,
+          "recall": 0.3584905660377358,
+          "f1": 0.4470588235294118,
+          "support": 265
+        },
+        "Tomato___Spider_mites Two-spotted_spider_mite": {
+          "precision": 0.5,
+          "recall": 0.003968253968253968,
+          "f1": 0.007874015748031496,
+          "support": 252
+        },
+        "Tomato___Target_Spot": {
+          "precision": 0.3,
+          "recall": 0.014285714285714285,
+          "f1": 0.02727272727272727,
+          "support": 210
+        },
+        "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+          "precision": 0.795144157814871,
+          "recall": 0.6525529265255293,
+          "f1": 0.7168262653898769,
+          "support": 803
+        },
+        "Tomato___Tomato_mosaic_virus": {
+          "precision": 0.3898305084745763,
+          "recall": 0.4107142857142857,
+          "f1": 0.4,
+          "support": 56
+        },
+        "Tomato___healthy": {
+          "precision": 0.9166666666666666,
+          "recall": 0.046218487394957986,
+          "f1": 0.088,
+          "support": 238
+        }
+      },
+      "confusion_matrix": [
+        [
+          41,
+          148,
+          75,
+          1,
+          6,
+          0,
+          0,
+          48,
+          0,
+          0
+        ],
+        [
+          1,
+          116,
+          25,
+          1,
+          2,
+          0,
+          0,
+          4,
+          1,
+          0
+        ],
+        [
+          0,
+          75,
+          190,
+          8,
+          8,
+          0,
+          0,
+          6,
+          0,
+          0
+        ],
+        [
+          0,
+          31,
+          26,
+          54,
+          15,
+          0,
+          0,
+          13,
+          4,
+          0
+        ],
+        [
+          2,
+          49,
+          64,
+          29,
+          95,
+          0,
+          0,
+          15,
+          10,
+          1
+        ],
+        [
+          1,
+          92,
+          101,
+          11,
+          9,
+          1,
+          1,
+          31,
+          5,
+          0
+        ],
+        [
+          1,
+          122,
+          46,
+          15,
+          6,
+          1,
+          3,
+          8,
+          8,
+          0
+        ],
+        [
+          21,
+          95,
+          144,
+          11,
+          8,
+          0,
+          0,
+          524,
+          0,
+          0
+        ],
+        [
+          0,
+          6,
+          11,
+          8,
+          8,
+          0,
+          0,
+          0,
+          23,
+          0
+        ],
+        [
+          1,
+          76,
+          94,
+          29,
+          3,
+          0,
+          6,
+          10,
+          8,
+          11
+        ]
+      ]
+    }
+  },
+  "resolution": {
+    "128": {
+      "accuracy": 0.866691149467499,
+      "macro_f1": 0.8369414669703094,
+      "macro_f1_present": 0.8369414669703094,
+      "classes_present": 10,
+      "classes_total": 10,
+      "weighted_f1": 0.8640268946351042,
+      "n_samples": 2723,
+      "per_class": {
+        "Tomato___Bacterial_spot": {
+          "precision": 0.9061488673139159,
+          "recall": 0.877742946708464,
+          "f1": 0.89171974522293,
+          "support": 319
+        },
+        "Tomato___Early_blight": {
+          "precision": 0.6852791878172588,
+          "recall": 0.9,
+          "f1": 0.7780979827089337,
+          "support": 150
+        },
+        "Tomato___Late_blight": {
+          "precision": 0.7734806629834254,
+          "recall": 0.975609756097561,
+          "f1": 0.8628659476117103,
+          "support": 287
+        },
+        "Tomato___Leaf_Mold": {
+          "precision": 0.875,
+          "recall": 0.9300699300699301,
+          "f1": 0.9016949152542373,
+          "support": 143
+        },
+        "Tomato___Septoria_leaf_spot": {
+          "precision": 0.9872340425531915,
+          "recall": 0.8754716981132076,
+          "f1": 0.928,
+          "support": 265
+        },
+        "Tomato___Spider_mites Two-spotted_spider_mite": {
+          "precision": 0.9019607843137255,
+          "recall": 0.7301587301587301,
+          "f1": 0.8070175438596491,
+          "support": 252
+        },
+        "Tomato___Target_Spot": {
+          "precision": 0.5666666666666667,
+          "recall": 0.6476190476190476,
+          "f1": 0.6044444444444445,
+          "support": 210
+        },
+        "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+          "precision": 0.9548156956004756,
+          "recall": 1.0,
+          "f1": 0.9768856447688564,
+          "support": 803
+        },
+        "Tomato___Tomato_mosaic_virus": {
+          "precision": 0.9152542372881356,
+          "recall": 0.9642857142857143,
+          "f1": 0.9391304347826087,
+          "support": 56
+        },
+        "Tomato___healthy": {
+          "precision": 0.9919354838709677,
+          "recall": 0.5168067226890757,
+          "f1": 0.6795580110497238,
+          "support": 238
+        }
+      },
+      "confusion_matrix": [
+        [
+          280,
+          1,
+          18,
+          0,
+          1,
+          0,
+          0,
+          19,
+          0,
+          0
+        ],
+        [
+          3,
+          135,
+          9,
+          0,
+          0,
+          1,
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          280,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          7,
+          133,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          1,
+          12,
+          9,
+          8,
+          232,
+          0,
+          0,
+          0,
+          3,
+          0
+        ],
+        [
+          1,
+          5,
+          16,
+          1,
+          0,
+          184,
+          31,
+          13,
+          1,
+          0
+        ],
+        [
+          24,
+          38,
+          7,
+          2,
+          0,
+          2,
+          136,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          803,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          54,
+          0
+        ],
+        [
+          0,
+          1,
+          16,
+          8,
+          0,
+          17,
+          72,
+          1,
+          0,
+          123
+        ]
+      ],
+      "protocol": "downscale to 128, restore to 224"
+    },
+    "200": {
+      "accuracy": 0.9625413147264047,
+      "macro_f1": 0.9543806527976452,
+      "macro_f1_present": 0.9543806527976452,
+      "classes_present": 10,
+      "classes_total": 10,
+      "weighted_f1": 0.9624736028926891,
+      "n_samples": 2723,
+      "per_class": {
+        "Tomato___Bacterial_spot": {
+          "precision": 0.9591194968553459,
+          "recall": 0.9561128526645768,
+          "f1": 0.957613814756672,
+          "support": 319
+        },
+        "Tomato___Early_blight": {
+          "precision": 0.8957055214723927,
+          "recall": 0.9733333333333334,
+          "f1": 0.9329073482428115,
+          "support": 150
+        },
+        "Tomato___Late_blight": {
+          "precision": 0.9459459459459459,
+          "recall": 0.975609756097561,
+          "f1": 0.9605488850771869,
+          "support": 287
+        },
+        "Tomato___Leaf_Mold": {
+          "precision": 0.9787234042553191,
+          "recall": 0.965034965034965,
+          "f1": 0.971830985915493,
+          "support": 143
+        },
+        "Tomato___Septoria_leaf_spot": {
+          "precision": 1.0,
+          "recall": 0.9811320754716981,
+          "f1": 0.9904761904761905,
+          "support": 265
+        },
+        "Tomato___Spider_mites Two-spotted_spider_mite": {
+          "precision": 0.9754098360655737,
+          "recall": 0.9444444444444444,
+          "f1": 0.9596774193548387,
+          "support": 252
+        },
+        "Tomato___Target_Spot": {
+          "precision": 0.8738317757009346,
+          "recall": 0.8904761904761904,
+          "f1": 0.8820754716981132,
+          "support": 210
+        },
+        "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+          "precision": 0.981640146878825,
+          "recall": 0.9987546699875467,
+          "f1": 0.9901234567901235,
+          "support": 803
+        },
+        "Tomato___Tomato_mosaic_virus": {
+          "precision": 0.9333333333333333,
+          "recall": 1.0,
+          "f1": 0.9655172413793104,
+          "support": 56
+        },
+        "Tomato___healthy": {
+          "precision": 0.9952380952380953,
+          "recall": 0.8781512605042017,
+          "f1": 0.9330357142857143,
+          "support": 238
+        }
+      },
+      "confusion_matrix": [
+        [
+          305,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          9,
+          0,
+          0
+        ],
+        [
+          1,
+          146,
+          2,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          280,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          2,
+          138,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          1,
+          1,
+          260,
+          0,
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          2,
+          1,
+          0,
+          0,
+          238,
+          8,
+          2,
+          1,
+          0
+        ],
+        [
+          10,
+          10,
+          0,
+          1,
+          0,
+          1,
+          187,
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          802,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          56,
+          0
+        ],
+        [
+          0,
+          0,
+          5,
+          1,
+          0,
+          4,
+          18,
+          1,
+          0,
+          209
+        ]
+      ],
+      "protocol": "downscale to 200, restore to 224"
+    },
+    "224": {
+      "accuracy": 0.9864120455380095,
+      "macro_f1": 0.9827174901777228,
+      "macro_f1_present": 0.9827174901777228,
+      "classes_present": 10,
+      "classes_total": 10,
+      "weighted_f1": 0.9863974434268127,
+      "n_samples": 2723,
+      "per_class": {
+        "Tomato___Bacterial_spot": {
+          "precision": 0.9905956112852664,
+          "recall": 0.9905956112852664,
+          "f1": 0.9905956112852664,
+          "support": 319
+        },
+        "Tomato___Early_blight": {
+          "precision": 0.948051948051948,
+          "recall": 0.9733333333333334,
+          "f1": 0.9605263157894737,
+          "support": 150
+        },
+        "Tomato___Late_blight": {
+          "precision": 0.972318339100346,
+          "recall": 0.9790940766550522,
+          "f1": 0.9756944444444444,
+          "support": 287
+        },
+        "Tomato___Leaf_Mold": {
+          "precision": 0.9791666666666666,
+          "recall": 0.986013986013986,
+          "f1": 0.9825783972125436,
+          "support": 143
+        },
+        "Tomato___Septoria_leaf_spot": {
+          "precision": 1.0,
+          "recall": 0.9886792452830189,
+          "f1": 0.9943074003795066,
+          "support": 265
+        },
+        "Tomato___Spider_mites Two-spotted_spider_mite": {
+          "precision": 0.9841269841269841,
+          "recall": 0.9841269841269841,
+          "f1": 0.9841269841269841,
+          "support": 252
+        },
+        "Tomato___Target_Spot": {
+          "precision": 0.9801980198019802,
+          "recall": 0.9428571428571428,
+          "f1": 0.9611650485436893,
+          "support": 210
+        },
+        "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+          "precision": 0.9962732919254659,
+          "recall": 0.9987546699875467,
+          "f1": 0.9975124378109452,
+          "support": 803
+        },
+        "Tomato___Tomato_mosaic_virus": {
+          "precision": 0.9824561403508771,
+          "recall": 1.0,
+          "f1": 0.9911504424778761,
+          "support": 56
+        },
+        "Tomato___healthy": {
+          "precision": 0.9874476987447699,
+          "recall": 0.9915966386554622,
+          "f1": 0.989517819706499,
+          "support": 238
+        }
+      },
+      "confusion_matrix": [
+        [
+          316,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          146,
+          3,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          281,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          2
+        ],
+        [
+          0,
+          0,
+          1,
+          141,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          1,
+          262,
+          0,
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          1,
+          1,
+          0,
+          0,
+          248,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          2,
+          0,
+          4,
+          198,
+          0,
+          0,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          802,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          56,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          236
+        ]
+      ],
+      "protocol": "native"
+    }
+  },
+  "cross_domain": {
+    "accuracy": 0.21179624664879357,
+    "macro_f1": 0.10255412379327519,
+    "macro_f1_present": 0.11394902643697244,
+    "classes_present": 9,
+    "classes_total": 10,
+    "weighted_f1": 0.15062326111353905,
+    "n_samples": 746,
+    "per_class": {
+      "Tomato___Bacterial_spot": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 110
+      },
+      "Tomato___Early_blight": {
+        "precision": 0.1474820143884892,
+        "recall": 0.4659090909090909,
+        "f1": 0.22404371584699453,
+        "support": 88
+      },
+      "Tomato___Late_blight": {
+        "precision": 0.2727272727272727,
+        "recall": 0.6216216216216216,
+        "f1": 0.3791208791208791,
+        "support": 111
+      },
+      "Tomato___Leaf_Mold": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 91
+      },
+      "Tomato___Septoria_leaf_spot": {
+        "precision": 0.2484472049689441,
+        "recall": 0.26490066225165565,
+        "f1": 0.2564102564102564,
+        "support": 151
+      },
+      "Tomato___Spider_mites Two-spotted_spider_mite": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 2
+      },
+      "Tomato___Target_Spot": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+        "precision": 0.16666666666666666,
+        "recall": 0.07894736842105263,
+        "f1": 0.10714285714285714,
+        "support": 76
+      },
+      "Tomato___Tomato_mosaic_virus": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 54
+      },
+      "Tomato___healthy": {
+        "precision": 0.4,
+        "recall": 0.031746031746031744,
+        "f1": 0.058823529411764705,
+        "support": 63
+      }
+    },
+    "confusion_matrix": [
+      [
+        0,
+        51,
+        27,
+        3,
+        25,
+        0,
+        0,
+        3,
+        0,
+        1
+      ],
+      [
+        1,
+        41,
+        28,
+        0,
+        17,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        29,
+        69,
+        0,
+        9,
+        0,
+        0,
+        2,
+        0,
+        0
+      ],
+      [
+        2,
+        24,
+        51,
+        0,
+        10,
+        0,
+        0,
+        4,
+        0,
+        0
+      ],
+      [
+        0,
+        78,
+        30,
+        1,
+        40,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        17,
+        15,
+        0,
+        37,
+        0,
+        0,
+        6,
+        0,
+        1
+      ],
+      [
+        0,
+        17,
+        18,
+        3,
+        13,
+        0,
+        0,
+        3,
+        0,
+        0
+      ],
+      [
+        0,
+        20,
+        15,
+        0,
+        9,
+        0,
+        0,
+        17,
+        0,
+        2
+      ]
+    ],
+    "n_images": 746
+  }
+}
