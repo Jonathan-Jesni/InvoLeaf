@@ -1,0 +1,272 @@
+{
+  "run_name": "abl_placement_every3_seed42",
+  "config": {
+    "split_file": "splits/plantvillage_tomato.json",
+    "image_size": 224,
+    "workers": 4,
+    "seed": 42,
+    "epochs": 20,
+    "warmup_epochs": 2,
+    "label_smoothing": 0.1,
+    "grad_clip": 1.0,
+    "weight_decay": 0.05,
+    "min_lr_factor": 0.01,
+    "lr": 0.0001,
+    "lr_backbone": 1e-05,
+    "lr_head": 0.001,
+    "effective_batch": 64,
+    "batch_size": 64,
+    "device": "auto",
+    "amp": "auto",
+    "pretrained": true,
+    "checkpoint_dir": "/root/involeaf_local/checkpoints",
+    "name": "abl_placement_every3",
+    "arch": "involeaf",
+    "backbone": "vit_base_patch16_224.augreg_in21k_ft_in1k",
+    "variant": "inv_ffn",
+    "inv_blocks": "every3",
+    "kernel_size": 7,
+    "group_channels": 16,
+    "reduction_ratio": 4,
+    "norm_layer": "gn",
+    "impl": "unfold",
+    "delta_init": true,
+    "ffn_ratio": 2.0,
+    "ffn_init": "slice",
+    "ffn_lr": "new",
+    "cls_mode": "identity"
+  },
+  "device": {
+    "device": "cuda",
+    "backend": "rocm",
+    "name": "AMD Radeon Pro W7900D",
+    "total_memory_gb": 48.0,
+    "amp_dtype": "bfloat16",
+    "torch_version": "2.13.0+rocm10.0.0",
+    "platform": "Linux 6.8.0-79-generic"
+  },
+  "started_at": "2026-10-24T19:26:40",
+  "epochs": [
+    {
+      "epoch": 0,
+      "train_loss": 1.1138099720983794,
+      "train_acc": 0.7829861111111112,
+      "val_acc": 0.9757798165137614,
+      "val_macro_f1": 0.9702422592601853,
+      "lr_head": 0.0005025252525252525,
+      "lr_new": 5.025252525252525e-05
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.6011081554672935,
+      "train_acc": 0.9809816919191919,
+      "val_acc": 0.9669724770642202,
+      "val_macro_f1": 0.9640842333393642,
+      "lr_head": 0.001,
+      "lr_new": 0.0001
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.5626058677832285,
+      "train_acc": 0.9891887626262627,
+      "val_acc": 0.9908256880733946,
+      "val_macro_f1": 0.9888487065860266,
+      "lr_head": 0.000992479837741043,
+      "lr_new": 9.92479837741043e-05
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.5413410281292116,
+      "train_acc": 0.9922664141414141,
+      "val_acc": 0.9926605504587156,
+      "val_macro_f1": 0.9905569466374053,
+      "lr_head": 0.0009701478472890247,
+      "lr_new": 9.701478472890248e-05
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.5282969023242141,
+      "train_acc": 0.9928977272727273,
+      "val_acc": 0.9926605504587156,
+      "val_macro_f1": 0.9920535135111864,
+      "lr_head": 0.0009336825748732972,
+      "lr_new": 9.336825748732972e-05
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.518286931093293,
+      "train_acc": 0.9952651515151515,
+      "val_acc": 0.9911926605504587,
+      "val_macro_f1": 0.991373517406901,
+      "lr_head": 0.0008841919993438941,
+      "lr_new": 8.84191999343894e-05
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.5115484721732863,
+      "train_acc": 0.9966066919191919,
+      "val_acc": 0.9970642201834863,
+      "val_macro_f1": 0.9957821264184957,
+      "lr_head": 0.0008231798667948369,
+      "lr_new": 8.23179866794837e-05
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.5056359939502947,
+      "train_acc": 0.9984217171717171,
+      "val_acc": 0.9959633027522936,
+      "val_macro_f1": 0.994850119648849,
+      "lr_head": 0.0007524999999999999,
+      "lr_new": 7.525e-05
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.5064140094651116,
+      "train_acc": 0.9979482323232324,
+      "val_acc": 0.9970642201834863,
+      "val_macro_f1": 0.9967850952973336,
+      "lr_head": 0.0006742999709462061,
+      "lr_new": 6.742999709462061e-05
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.5068206880429779,
+      "train_acc": 0.9982638888888888,
+      "val_acc": 0.998165137614679,
+      "val_macro_f1": 0.9979239106968365,
+      "lr_head": 0.0005909558479451306,
+      "lr_new": 5.909558479451306e-05
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.5033257420014854,
+      "train_acc": 0.9990530303030303,
+      "val_acc": 0.9974311926605505,
+      "val_macro_f1": 0.9964727557633705,
+      "lr_head": 0.000505,
+      "lr_new": 5.05e-05
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.5025993979940511,
+      "train_acc": 0.9993686868686869,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9990124716000853,
+      "lr_head": 0.0004190441520548695,
+      "lr_new": 4.190441520548695e-05
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.5014609303137268,
+      "train_acc": 0.9996843434343434,
+      "val_acc": 0.9985321100917431,
+      "val_macro_f1": 0.9983912037477026,
+      "lr_head": 0.00033570002905379407,
+      "lr_new": 3.357000290537941e-05
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.5007757550538189,
+      "train_acc": 0.9998421717171717,
+      "val_acc": 0.9985321100917431,
+      "val_macro_f1": 0.9983912037477026,
+      "lr_head": 0.00025750000000000013,
+      "lr_new": 2.5750000000000013e-05
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.5009933565602158,
+      "train_acc": 0.9998421717171717,
+      "val_acc": 0.998165137614679,
+      "val_macro_f1": 0.9980689021166901,
+      "lr_head": 0.00018682013320516302,
+      "lr_new": 1.8682013320516302e-05
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.5008665976500271,
+      "train_acc": 0.9998421717171717,
+      "val_acc": 0.9985321100917431,
+      "val_macro_f1": 0.9982367820176508,
+      "lr_head": 0.00012580800065610596,
+      "lr_new": 1.2580800065610596e-05
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.500885991737096,
+      "train_acc": 0.9997632575757576,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9986209446246598,
+      "lr_head": 7.631742512670284e-05,
+      "lr_new": 7.631742512670284e-06
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.5004374421004093,
+      "train_acc": 1.0,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9986209446246598,
+      "lr_head": 3.9852152710975386e-05,
+      "lr_new": 3.985215271097539e-06
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.500429197092249,
+      "train_acc": 1.0,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9986209446246598,
+      "lr_head": 1.7520162258957028e-05,
+      "lr_new": 1.7520162258957028e-06
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.5004287097189162,
+      "train_acc": 1.0,
+      "val_acc": 0.9988990825688073,
+      "val_macro_f1": 0.9986209446246598,
+      "lr_head": 1e-05,
+      "lr_new": 1.0000000000000002e-06
+    }
+  ],
+  "num_classes": 10,
+  "class_names": [
+    "Tomato___Bacterial_spot",
+    "Tomato___Early_blight",
+    "Tomato___Late_blight",
+    "Tomato___Leaf_Mold",
+    "Tomato___Septoria_leaf_spot",
+    "Tomato___Spider_mites Two-spotted_spider_mite",
+    "Tomato___Target_Spot",
+    "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+    "Tomato___Tomato_mosaic_virus",
+    "Tomato___healthy"
+  ],
+  "effective_batch": 64,
+  "accum_steps": 1,
+  "params_total": 78770122,
+  "model_meta": {
+    "backbone": "vit_base_patch16_224.augreg_in21k_ft_in1k",
+    "variant": "inv_ffn",
+    "inv_blocks": "every3",
+    "inv_block_indices": [
+      0,
+      3,
+      6,
+      9
+    ],
+    "kernel_size": 7,
+    "group_channels": 16,
+    "reduction_ratio": 4,
+    "norm_layer": "gn",
+    "impl": "unfold",
+    "ffn_ratio": 2.0,
+    "ffn_init": "slice",
+    "cls_mode": "identity",
+    "ffn_lr": "new"
+  },
+  "best_val_macro_f1": 0.9990124716000853,
+  "best_epoch": 11,
+  "checkpoint": "/root/involeaf_local/checkpoints/abl_placement_every3_seed42.pth",
+  "peak_train_memory_gb": 15.262586116790771,
+  "finished_at": "2026-10-24T19:50:10"
+}

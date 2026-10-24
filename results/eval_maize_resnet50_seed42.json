@@ -1,0 +1,714 @@
+{
+  "checkpoint": "/root/involeaf_local/checkpoints/maize_resnet50_seed42.pth",
+  "config": {
+    "split_file": "splits/plantvillage_maize.json",
+    "image_size": 224,
+    "workers": 4,
+    "seed": 42,
+    "epochs": 20,
+    "warmup_epochs": 2,
+    "label_smoothing": 0.1,
+    "grad_clip": 1.0,
+    "weight_decay": 0.05,
+    "min_lr_factor": 0.01,
+    "lr": 0.0001,
+    "lr_backbone": 0.0001,
+    "lr_head": 0.001,
+    "effective_batch": 64,
+    "batch_size": 64,
+    "device": "auto",
+    "amp": "auto",
+    "pretrained": true,
+    "checkpoint_dir": "/root/involeaf_local/checkpoints",
+    "name": "maize_resnet50",
+    "arch": "timm",
+    "backbone": "resnet50.a1_in1k"
+  },
+  "device": {
+    "device": "cuda",
+    "backend": "rocm",
+    "name": "AMD Radeon Pro W7900D",
+    "total_memory_gb": 48.0,
+    "amp_dtype": "bfloat16",
+    "torch_version": "2.13.0+rocm10.0.0",
+    "platform": "Linux 6.8.0-79-generic"
+  },
+  "robustness": {
+    "clean": {
+      "accuracy": 0.9740484429065744,
+      "macro_f1": 0.963549569091496,
+      "macro_f1_present": 0.963549569091496,
+      "classes_present": 4,
+      "classes_total": 4,
+      "weighted_f1": 0.9739355414655366,
+      "n_samples": 578,
+      "per_class": {
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+          "precision": 0.92,
+          "recall": 0.8961038961038961,
+          "f1": 0.9078947368421053,
+          "support": 77
+        },
+        "Corn_(maize)___Common_rust_": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 179
+        },
+        "Corn_(maize)___Northern_Leaf_Blight": {
+          "precision": 0.9459459459459459,
+          "recall": 0.9523809523809523,
+          "f1": 0.9491525423728814,
+          "support": 147
+        },
+        "Corn_(maize)___healthy": {
+          "precision": 0.9943181818181818,
+          "recall": 1.0,
+          "f1": 0.9971509971509972,
+          "support": 175
+        }
+      },
+      "confusion_matrix": [
+        [
+          69,
+          0,
+          8,
+          0
+        ],
+        [
+          0,
+          179,
+          0,
+          0
+        ],
+        [
+          6,
+          0,
+          140,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          175
+        ]
+      ]
+    },
+    "colorjitter": {
+      "accuracy": 0.967128027681661,
+      "macro_f1": 0.953855365971407,
+      "macro_f1_present": 0.953855365971407,
+      "classes_present": 4,
+      "classes_total": 4,
+      "weighted_f1": 0.9670743967010959,
+      "n_samples": 578,
+      "per_class": {
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+          "precision": 0.8831168831168831,
+          "recall": 0.8831168831168831,
+          "f1": 0.8831168831168831,
+          "support": 77
+        },
+        "Corn_(maize)___Common_rust_": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 179
+        },
+        "Corn_(maize)___Northern_Leaf_Blight": {
+          "precision": 0.9383561643835616,
+          "recall": 0.9319727891156463,
+          "f1": 0.9351535836177475,
+          "support": 147
+        },
+        "Corn_(maize)___healthy": {
+          "precision": 0.9943181818181818,
+          "recall": 1.0,
+          "f1": 0.9971509971509972,
+          "support": 175
+        }
+      },
+      "confusion_matrix": [
+        [
+          68,
+          0,
+          9,
+          0
+        ],
+        [
+          0,
+          179,
+          0,
+          0
+        ],
+        [
+          9,
+          0,
+          137,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          175
+        ]
+      ]
+    },
+    "blur": {
+      "accuracy": 0.9705882352941176,
+      "macro_f1": 0.9609449521860668,
+      "macro_f1_present": 0.9609449521860668,
+      "classes_present": 4,
+      "classes_total": 4,
+      "weighted_f1": 0.9705562848238779,
+      "n_samples": 578,
+      "per_class": {
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+          "precision": 0.9090909090909091,
+          "recall": 0.9090909090909091,
+          "f1": 0.9090909090909091,
+          "support": 77
+        },
+        "Corn_(maize)___Common_rust_": {
+          "precision": 1.0,
+          "recall": 0.9888268156424581,
+          "f1": 0.9943820224719101,
+          "support": 179
+        },
+        "Corn_(maize)___Northern_Leaf_Blight": {
+          "precision": 0.952054794520548,
+          "recall": 0.9455782312925171,
+          "f1": 0.9488054607508533,
+          "support": 147
+        },
+        "Corn_(maize)___healthy": {
+          "precision": 0.9831460674157303,
+          "recall": 1.0,
+          "f1": 0.9915014164305949,
+          "support": 175
+        }
+      },
+      "confusion_matrix": [
+        [
+          70,
+          0,
+          7,
+          0
+        ],
+        [
+          0,
+          177,
+          0,
+          2
+        ],
+        [
+          7,
+          0,
+          139,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          175
+        ]
+      ]
+    },
+    "erasing": {
+      "accuracy": 0.20069204152249134,
+      "macro_f1": 0.14639849532823684,
+      "macro_f1_present": 0.14639849532823684,
+      "classes_present": 4,
+      "classes_total": 4,
+      "weighted_f1": 0.13529960964021145,
+      "n_samples": 578,
+      "per_class": {
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+          "precision": 0.14457831325301204,
+          "recall": 0.7792207792207793,
+          "f1": 0.24390243902439024,
+          "support": 77
+        },
+        "Corn_(maize)___Common_rust_": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 179
+        },
+        "Corn_(maize)___Northern_Leaf_Blight": {
+          "precision": 0.3333333333333333,
+          "recall": 0.006802721088435374,
+          "f1": 0.013333333333333334,
+          "support": 147
+        },
+        "Corn_(maize)___healthy": {
+          "precision": 0.34375,
+          "recall": 0.3142857142857143,
+          "f1": 0.3283582089552239,
+          "support": 175
+        }
+      },
+      "confusion_matrix": [
+        [
+          60,
+          0,
+          0,
+          17
+        ],
+        [
+          124,
+          0,
+          1,
+          54
+        ],
+        [
+          112,
+          0,
+          1,
+          34
+        ],
+        [
+          119,
+          0,
+          1,
+          55
+        ]
+      ]
+    },
+    "combined": {
+      "accuracy": 0.19896193771626297,
+      "macro_f1": 0.1447034039638338,
+      "macro_f1_present": 0.1447034039638338,
+      "classes_present": 4,
+      "classes_total": 4,
+      "weighted_f1": 0.13376125328080501,
+      "n_samples": 578,
+      "per_class": {
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+          "precision": 0.14285714285714285,
+          "recall": 0.7662337662337663,
+          "f1": 0.24081632653061225,
+          "support": 77
+        },
+        "Corn_(maize)___Common_rust_": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 179
+        },
+        "Corn_(maize)___Northern_Leaf_Blight": {
+          "precision": 1.0,
+          "recall": 0.006802721088435374,
+          "f1": 0.013513513513513514,
+          "support": 147
+        },
+        "Corn_(maize)___healthy": {
+          "precision": 0.3353658536585366,
+          "recall": 0.3142857142857143,
+          "f1": 0.32448377581120946,
+          "support": 175
+        }
+      },
+      "confusion_matrix": [
+        [
+          59,
+          0,
+          0,
+          18
+        ],
+        [
+          123,
+          0,
+          0,
+          56
+        ],
+        [
+          111,
+          0,
+          1,
+          35
+        ],
+        [
+          120,
+          0,
+          0,
+          55
+        ]
+      ]
+    },
+    "erasing_black": {
+      "accuracy": 0.9446366782006921,
+      "macro_f1": 0.9241081083381028,
+      "macro_f1_present": 0.9241081083381028,
+      "classes_present": 4,
+      "classes_total": 4,
+      "weighted_f1": 0.9433135483737175,
+      "n_samples": 578,
+      "per_class": {
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+          "precision": 0.8805970149253731,
+          "recall": 0.7662337662337663,
+          "f1": 0.8194444444444444,
+          "support": 77
+        },
+        "Corn_(maize)___Common_rust_": {
+          "precision": 0.9572192513368984,
+          "recall": 1.0,
+          "f1": 0.9781420765027322,
+          "support": 179
+        },
+        "Corn_(maize)___Northern_Leaf_Blight": {
+          "precision": 0.8986486486486487,
+          "recall": 0.9047619047619048,
+          "f1": 0.9016949152542373,
+          "support": 147
+        },
+        "Corn_(maize)___healthy": {
+          "precision": 0.9943181818181818,
+          "recall": 1.0,
+          "f1": 0.9971509971509972,
+          "support": 175
+        }
+      },
+      "confusion_matrix": [
+        [
+          59,
+          3,
+          15,
+          0
+        ],
+        [
+          0,
+          179,
+          0,
+          0
+        ],
+        [
+          8,
+          5,
+          133,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          175
+        ]
+      ]
+    },
+    "erasing_noise01": {
+      "accuracy": 0.33391003460207613,
+      "macro_f1": 0.27226688601120186,
+      "macro_f1_present": 0.27226688601120186,
+      "classes_present": 4,
+      "classes_total": 4,
+      "weighted_f1": 0.2698062651396741,
+      "n_samples": 578,
+      "per_class": {
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+          "precision": 0.17888563049853373,
+          "recall": 0.7922077922077922,
+          "f1": 0.291866028708134,
+          "support": 77
+        },
+        "Corn_(maize)___Common_rust_": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 179
+        },
+        "Corn_(maize)___Northern_Leaf_Blight": {
+          "precision": 0.9,
+          "recall": 0.12244897959183673,
+          "f1": 0.2155688622754491,
+          "support": 147
+        },
+        "Corn_(maize)___healthy": {
+          "precision": 0.5253456221198156,
+          "recall": 0.6514285714285715,
+          "f1": 0.5816326530612245,
+          "support": 175
+        }
+      },
+      "confusion_matrix": [
+        [
+          61,
+          0,
+          0,
+          16
+        ],
+        [
+          117,
+          0,
+          2,
+          60
+        ],
+        [
+          102,
+          0,
+          18,
+          27
+        ],
+        [
+          61,
+          0,
+          0,
+          114
+        ]
+      ]
+    },
+    "combined_black": {
+      "accuracy": 0.8979238754325259,
+      "macro_f1": 0.8575331463283392,
+      "macro_f1_present": 0.8575331463283392,
+      "classes_present": 4,
+      "classes_total": 4,
+      "weighted_f1": 0.8929603329741201,
+      "n_samples": 578,
+      "per_class": {
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+          "precision": 0.7586206896551724,
+          "recall": 0.5714285714285714,
+          "f1": 0.6518518518518519,
+          "support": 77
+        },
+        "Corn_(maize)___Common_rust_": {
+          "precision": 0.9365079365079365,
+          "recall": 0.9888268156424581,
+          "f1": 0.9619565217391305,
+          "support": 179
+        },
+        "Corn_(maize)___Northern_Leaf_Blight": {
+          "precision": 0.8581081081081081,
+          "recall": 0.8639455782312925,
+          "f1": 0.8610169491525423,
+          "support": 147
+        },
+        "Corn_(maize)___healthy": {
+          "precision": 0.9344262295081968,
+          "recall": 0.9771428571428571,
+          "f1": 0.9553072625698324,
+          "support": 175
+        }
+      },
+      "confusion_matrix": [
+        [
+          44,
+          6,
+          21,
+          6
+        ],
+        [
+          0,
+          177,
+          0,
+          2
+        ],
+        [
+          10,
+          6,
+          127,
+          4
+        ],
+        [
+          4,
+          0,
+          0,
+          171
+        ]
+      ]
+    }
+  },
+  "resolution": {
+    "128": {
+      "accuracy": 0.9688581314878892,
+      "macro_f1": 0.9556635882139238,
+      "macro_f1_present": 0.9556635882139238,
+      "classes_present": 4,
+      "classes_total": 4,
+      "weighted_f1": 0.9685761158671681,
+      "n_samples": 578,
+      "per_class": {
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+          "precision": 0.9166666666666666,
+          "recall": 0.8571428571428571,
+          "f1": 0.8859060402684564,
+          "support": 77
+        },
+        "Corn_(maize)___Common_rust_": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 179
+        },
+        "Corn_(maize)___Northern_Leaf_Blight": {
+          "precision": 0.9271523178807947,
+          "recall": 0.9523809523809523,
+          "f1": 0.9395973154362416,
+          "support": 147
+        },
+        "Corn_(maize)___healthy": {
+          "precision": 0.9943181818181818,
+          "recall": 1.0,
+          "f1": 0.9971509971509972,
+          "support": 175
+        }
+      },
+      "confusion_matrix": [
+        [
+          66,
+          0,
+          11,
+          0
+        ],
+        [
+          0,
+          179,
+          0,
+          0
+        ],
+        [
+          6,
+          0,
+          140,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          175
+        ]
+      ],
+      "protocol": "downscale to 128, restore to 224"
+    },
+    "200": {
+      "accuracy": 0.9740484429065744,
+      "macro_f1": 0.9633281533281534,
+      "macro_f1_present": 0.9633281533281534,
+      "classes_present": 4,
+      "classes_total": 4,
+      "weighted_f1": 0.9738590232015837,
+      "n_samples": 578,
+      "per_class": {
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+          "precision": 0.9315068493150684,
+          "recall": 0.8831168831168831,
+          "f1": 0.9066666666666666,
+          "support": 77
+        },
+        "Corn_(maize)___Common_rust_": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 179
+        },
+        "Corn_(maize)___Northern_Leaf_Blight": {
+          "precision": 0.94,
+          "recall": 0.9591836734693877,
+          "f1": 0.9494949494949495,
+          "support": 147
+        },
+        "Corn_(maize)___healthy": {
+          "precision": 0.9943181818181818,
+          "recall": 1.0,
+          "f1": 0.9971509971509972,
+          "support": 175
+        }
+      },
+      "confusion_matrix": [
+        [
+          68,
+          0,
+          9,
+          0
+        ],
+        [
+          0,
+          179,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          141,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          175
+        ]
+      ],
+      "protocol": "downscale to 200, restore to 224"
+    },
+    "224": {
+      "accuracy": 0.9740484429065744,
+      "macro_f1": 0.963549569091496,
+      "macro_f1_present": 0.963549569091496,
+      "classes_present": 4,
+      "classes_total": 4,
+      "weighted_f1": 0.9739355414655366,
+      "n_samples": 578,
+      "per_class": {
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+          "precision": 0.92,
+          "recall": 0.8961038961038961,
+          "f1": 0.9078947368421053,
+          "support": 77
+        },
+        "Corn_(maize)___Common_rust_": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 179
+        },
+        "Corn_(maize)___Northern_Leaf_Blight": {
+          "precision": 0.9459459459459459,
+          "recall": 0.9523809523809523,
+          "f1": 0.9491525423728814,
+          "support": 147
+        },
+        "Corn_(maize)___healthy": {
+          "precision": 0.9943181818181818,
+          "recall": 1.0,
+          "f1": 0.9971509971509972,
+          "support": 175
+        }
+      },
+      "confusion_matrix": [
+        [
+          69,
+          0,
+          8,
+          0
+        ],
+        [
+          0,
+          179,
+          0,
+          0
+        ],
+        [
+          6,
+          0,
+          140,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          175
+        ]
+      ],
+      "protocol": "native"
+    }
+  }
+}
