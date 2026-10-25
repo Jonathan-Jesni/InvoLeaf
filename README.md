@@ -1,99 +1,109 @@
 # InvoLeaf
 
 Involution inside the Vision Transformer encoder block, for plant leaf disease
-classification.
+classification, compared against ViT-B/16, ResNet-50 and a reproduction of AgriTL-ViT
+(Expert Systems with Applications, 2025).
 
-**Claim.** Comparable accuracy at lower parameter and compute cost, with better
-robustness to realistic field conditions. Not a clean-accuracy win — PlantVillage is
-lab-captured and saturated, with every published method sitting between 94% and 98.5%.
+B.Tech Major Project, Semester 7. Mohammad Arsalan Siddiqui, Aditya Harikrishnan,
+Jonathan Jesni, Om Arun Thombre. Advisor: Ms Anupama Arun.
+
+**Full results, ablations, claims and limitations: [RESULTS.md](RESULTS.md).**
 
 ---
 
-## The gap this fills
+## What we found
 
-Two papers leave complementary holes.
+On PlantVillage tomato (18,160 images, 3 seeds), with corruptions applied at test time:
 
-**Involution** (Li et al., CVPR 2021) introduces a spatial-specific, channel-agnostic,
-dynamically-generated operator. Because its kernels are shared across channels, cost
-grows linearly with channel count, so a 7×7 receptive field is affordable where 7×7
-convolution is not. It is never tested inside a transformer, never on fine-grained data,
-and never under corruption.
+| Model | Params | GMACs | Clean | Colour | Blur | Occlusion | Combined | Field photos |
+|---|---|---|---|---|---|---|---|---|
+| ViT-B/16 | 85.8M | 17.6 | 99.9 | **93.8** | **97.2** | **98.5** | **72.4** | **35.9** |
+| **InvoLeaf** | 64.7M | 13.5 | 99.9 | 87.7 | 93.6 | 97.4 | 61.0 | 28.3 |
+| ResNet-50 | 23.5M | 4.1 | 99.4 | 89.2 | 74.1 | 98.3 | 59.1 | 34.0 |
+| AgriTL-ViT | 100.0M | 21.1 | 99.3 | 71.0 | 89.9 | 87.7 | 46.2 | 18.9 |
 
-**AgriTL-ViT** (Expert Systems with Applications, 2025) replaces the ViT MLP with a
-module presented as extracting *"hierarchical spatial features"*. That module is six 1×1
-convolutions and two 3×1 max-pools. A 1×1 convolution is a per-token linear map — it
-cannot mix spatial information. The only spatial interaction comes from the max-pools,
-which are non-parametric, lossy, and operate on the *flattened raster sequence*, pooling
-token 13 (end of row 0) with token 14 (start of row 1). So roughly 3.5M parameters buy
-no learnable spatial mixing. Their Table 17 then shows accuracy collapsing to
-74.9% / 61.4% / 80.3% under combined field-style corruption.
+- **InvoLeaf matches ViT-B on clean accuracy with 25% fewer parameters and 23% fewer
+  MACs**, but it is less robust than plain ViT-B on every corruption and on field photos,
+  and slower per image (10.4 vs 4.5 ms) because involution has no fused GPU kernel.
+- **InvoLeaf beats AgriTL-ViT on every test** (colour +17, occlusion +10, combined +15,
+  field +9 points) while using 35% fewer parameters and 36% fewer MACs. AgriTL-ViT's
+  1×1 convolutions cannot mix spatial information; involution can.
+- **The robustness cost scales with how many blocks get involution.** Four involution
+  blocks instead of twelve come close to ViT-B's robustness but save only 8% of
+  parameters (single seed).
+  It is not a learning-rate effect, and kernel size does not matter (K=3 ≈ K=7, and K=3
+  is 2.4× cheaper to train).
+- **A common occlusion test invents robustness differences.** `RandomErasing(value=
+  "random")` before normalisation fills the box with values far outside the valid pixel
+  range. Under it, InvoLeaf looked 10 points more robust than ViT-B and ResNet-50 sent
+  99.8% of images to one class; with a valid (black) patch both effects vanish.
+- **The same ordering holds on maize**, a second crop, and **every model collapses on
+  real field photographs** (PlantDoc: 19–36% after ~99% in the lab).
 
-There is a slot in the block where spatial mixing was promised but not delivered.
-Involution is the operator shaped to fill it.
+## The idea
 
-## Architecture
+A ViT block is `x = x + attn(norm1(x))` then `x = x + mlp(norm2(x))`. The MLP works on
+each token separately, so all spatial mixing happens inside attention. AgriTL-ViT fills
+that MLP slot with six 1×1 convolutions and two 3×1 max-pools, presented as extracting
+spatial features; but a 1×1 convolution is a per-token linear map, and the max-pools run
+over the flattened token sequence (pooling the end of one row with the start of the
+next). **Involution** (Li et al., CVPR 2021) is a spatial operator whose kernel at each
+location is generated from that location's own features and shared across channels, so
+a 7×7 neighbourhood is cheap. We put it in the slot.
 
-A timm ViT block is `x = x + attn(norm1(x))` then `x = x + mlp(norm2(x))`. The MLP runs
-per token, so **all** spatial mixing in a ViT happens inside attention. We replace the
-MLP slot.
+Involution mixes space but not channels, so a naive swap deletes the block's channel
+mixing. Three variants test this:
 
-Involution is channel-*agnostic*: it mixes space but not channels. Since the FFN is the
-block's main channel-mixing stage, a naive swap deletes channel mixing — so the primary
-variant keeps a narrowed FFN alongside.
-
-| Variant | Block | Params | Role |
+| Variant | Block | Params | Result |
 |---|---|---|---|
-| `pure` | `x + Inv(norm2(x))` | 36.4M | Faithful swap. Expected to underperform; the ablation showing why channel mixing matters. |
-| **`inv_ffn`** | `x + FFN_r2(Inv(norm2(x)))` | **64.7M** | **Primary.** Real spatial mixing plus retained channel mixing. |
-| `parallel` | `x + FFN_r4(norm2(x)) + Inv(norm2(x))` | 93.0M | Capacity control: did involution help, or did more parameters help? |
+| `pure` | `x + Inv(norm2(x))` | 36.4M | Breaks robustness (colour 62%): channel mixing is essential |
+| **`inv_ffn`** (InvoLeaf) | `x + FFN_r2(Inv(norm2(x)))` | **64.7M** | Primary model |
+| `parallel` | `x + FFN_r4(norm2(x)) + Inv(norm2(x))` | 93.0M | Capacity control; still less robust than ViT-B |
 
-Baseline ViT-B/16 is 85.8M, so the primary variant is **24.6% lighter**. The
-AgriTL-ViT reproduction measures 100.0M -- it moves the other way, because a second
-attention stage per block outweighs what its narrower MLP replacement saves.
+### Engineering details
 
-### Two engineering details that make it work
+**Two equivalent implementations.** The reference `unfold` formulation materialises a
+`B × C·K² × HW` tensor: 6.5 GB of activations for 12 blocks at batch 16, which does not
+fit an 8 GB laptop GPU. The `shift` path accumulates over the K² offsets as slices of one
+padded tensor, so they share storage: 0.6 GB for the same 12 blocks. Both compute the same
+function to machine precision (`tests/test_involution.py`). On the 48 GB cloud GPU,
+`unfold` is twice as fast (624 vs 1,230 ms per step), so the configs use it.
 
-**Memory-efficient involution.** The reference `nn.Unfold` formulation materialises
-`B × C·K² × HW`. Measured on the RTX 5050 at C=768, K=7, batch 16, across 12 blocks:
+**Delta initialisation.** Involution is inserted into a *pretrained* encoder. Zeroing
+`span.weight` and setting its bias to a centre-tap delta makes the operator an exact
+identity at step 0, so the pretrained network is undisturbed. Gradients still reach
+`span.weight`, so it leaves the identity after one optimiser step. For the `parallel`
+variant, where involution is *added* beside the pretrained FFN, the branch instead starts
+at zero output, so the block starts exactly as the pretrained one.
 
-| implementation | 1 block | 12 blocks |
-|---|---|---|
-| `unfold` (reference) | 0.93 GB | **6.51 GB** |
-| `shift` (default) | 0.08 GB | **0.61 GB** |
+## Reproducing
 
-6.51 GB would OOM an 8 GB card before ViT's own activations are counted. The `shift`
-path accumulates over the K² kernel offsets by slicing a padded, pre-reshaped view, so
-the K² tensors autograd saves all share **one** storage. Both paths are numerically
-identical to machine precision (`tests/test_involution.py`), so this is an optimisation,
-not a different operator. The cost is K² small kernels per block instead of one large
-one — it trades wall-clock for the ability to run K=7 at all.
-
-**Delta initialisation.** The involution block is randomly initialised inside a
-*pretrained* encoder, which normally costs several rough epochs. Zeroing `span.weight`
-and setting its bias to a delta kernel makes the operator an exact spatial identity at
-step 0, so the pretrained weights see undisturbed activations. Gradients still reach
-`span.weight`, so it lifts off the identity after one optimiser step (verified in the
-test suite — if it ever regressed, the operator would train only its bias and silently
-stay an identity).
-
-## Setup
-
-Install torch for your backend first, from https://pytorch.org — CUDA on the RTX 5050,
-ROCm on the W7800. Then:
+Install torch and torchvision for your backend first (https://pytorch.org; CUDA or ROCm),
+then:
 
 ```bash
 pip install -r requirements.txt
 ```
 
+Download the datasets and build the splits. The committed split files mean everyone
+trains on the same partition.
+
 ```bash
 python scripts/prepare_data.py --dataset tomato --clone
 ```
 
-## Running
+```bash
+python scripts/prepare_data.py --dataset plantdoc --clone
+```
+
+On machines behind an unreliable proxy (our cloud instances), use the batched,
+retrying downloader instead:
 
 ```bash
-python scripts/train.py --config configs/vit_b16_baseline.yaml --epochs 1 --limit-batches 20
+bash scripts/fetch_data.sh
 ```
+
+Train and evaluate one model:
 
 ```bash
 python scripts/train.py --config configs/involeaf_b16.yaml --seeds 42 43 44
@@ -103,84 +113,96 @@ python scripts/train.py --config configs/involeaf_b16.yaml --seeds 42 43 44
 python scripts/eval_robustness.py --ckpt results/checkpoints/involeaf_b16_seed42.pth
 ```
 
+Any config key can be overridden: `--set kernel_size=3 batch_size=32`.
+
+For time-limited GPU sessions, `scripts/run_queue.sh` runs whole phases of the study,
+starts only runs that fit the remaining time, and evaluates each run as soon as it
+finishes. `python scripts/status.py` shows what is done, running and left.
+
 ```bash
-python scripts/benchmark.py --all
+BUDGET_MIN=150 SEED=42 bash scripts/run_queue.sh S
 ```
+
+Tables, figures and cost numbers, all derived from `results/*.json`:
 
 ```bash
 python scripts/make_tables.py
 ```
 
-Any config key can be overridden inline:
-
 ```bash
-python scripts/train.py --config configs/involeaf_b16.yaml --set kernel_size=3 batch_size=8
+python scripts/make_plots.py
 ```
 
-## Experimental protocol
+```bash
+python scripts/plot_mechanism.py
+```
 
-**Splits.** Stratified 70/15/15, seed 42, committed to `splits/`. AgriTL-ViT uses 70/30
-with no validation split, which leaves no honest way to select a checkpoint. We split
-their 30% in half; the test partition is untouched until final evaluation. Paths are
-sorted before shuffling, because filesystem order is not stable across machines.
+```bash
+python scripts/benchmark.py --flops-only
+```
 
-**Effective batch is pinned at 64** via gradient accumulation. `batch_size` is a memory
-detail (16 on the 8 GB RTX 5050, 64 on the 32 GB W7800); the effective batch is the
-hyperparameter. Without pinning, September and October results would not be comparable.
+Tests:
 
-**Robustness** reuses AgriTL-ViT's Table 17 protocol — ColorJitter, GaussianBlur,
-RandomErasing, individually and combined — applied at test time to clean-trained
-weights, so the whole stage costs no retraining. Corruptions are seeded per sample
-index, so the same image gets the same corruption for every model on every run.
-Training augmentation deliberately excludes colour jitter: lesion colour is the signal,
-and training on colour-shifted data would contaminate that test.
+```bash
+python -m pytest
+```
 
-**Resolution.** AgriTL-ViT reports a 200×200 test, but 200 is not divisible by the patch
-size 16 — the patch embedding rejects the input, so it cannot have been a native
-evaluation. We read "low resolution" as information loss at fixed input size (downscale
-to the target, restore to 224). `native_resolution_transform` handles genuine
-native-resolution evaluation and accepts only multiples of 16.
+## Protocol
 
-**Metrics.** `involeaf/utils/metrics.py` asserts that per-class F1 lies between its
-precision and recall, and that support is derived from the labels. This is a direct
-guard against the errors in AgriTL-ViT's tables — Tomato Early_blight at P 0.977 /
-R 0.958 / F1 0.857 is impossible, and the Rice support column is identical to the Tomato
-one across datasets of different sizes. Our tables are structurally incapable of
-carrying the same mistake.
+- **Splits.** Stratified 70/15/15, seed 42, committed in `splits/`. AgriTL-ViT uses
+  70/30 with no validation set; we keep a validation split so the checkpoint is never
+  chosen on test data. We use the full 18,160 tomato images (AgriTL-ViT reports 14,529).
+- **Training.** 20 epochs, AdamW, warm-up then cosine decay, label smoothing 0.1, bf16,
+  effective batch 64 regardless of GPU memory. Layer-wise learning rates: new modules
+  1e-4, pretrained weights 1e-5, classifier 1e-3. Best checkpoint by validation macro-F1.
+- **Robustness.** Colour jitter, Gaussian blur, occlusion (5–20% of the image, black
+  patch) and all three combined, applied at test time only and seeded per image, so every
+  model sees exactly the same corruptions. Training augmentation excludes colour jitter.
+  Low resolution is downscale-then-restore (AgriTL-ViT's 200 px cannot be a native ViT
+  evaluation: 200 is not divisible by the patch size 16).
+- **Field photos.** PlantDoc tomato, 746 images over 9 of the 10 classes, never trained
+  on; we report accuracy and macro-F1 over the classes present.
+- **Metrics.** `involeaf/utils/metrics.py` asserts that every per-class F1 lies between
+  its precision and recall and derives support from the labels. AgriTL-ViT's tables
+  contain an impossible F1 (P 0.977, R 0.958, F1 0.857); ours cannot.
+- **No hand-copied numbers.** Every table and figure is generated from the result JSONs.
 
-**Tables** are generated by `scripts/make_tables.py` from `results/*.json`. No number in
-the report is hand-copied.
+## Limitations
 
-## Known limitations, stated up front
-
-- **FLOP savings will not fully appear in wall-clock time.** There is no fused
-  involution kernel; the original paper says so itself (Table 2: RedNet-50 14.3 ms vs
-  ResNet-50 11.4 ms on GPU despite fewer FLOPs). Our shift-based implementation trades
-  speed for memory further still. Report the gap rather than hiding it.
-- **Involution may overlap functionally with attention.** At a 14×14 token grid a 7×7
-  kernel covers half the grid, approaching what attention already does globally. The K
-  ablation makes this answerable either way — if K=3 matches K=7, that is a finding
-  about locality, and more interesting than a bare accuracy bump.
-- **The AgriTL-ViT reproduction is an interpretation.** The paper's prose does not
-  determine a unique wiring; ours is documented in `involeaf/models/agritl_vit.py`.
-  It probably will not reach 98.5%, and that gap is itself a result.
-- **PlantVillage tomato holds ~18,160 images**, against the 14,529 AgriTL-ViT reports.
-  We use the full set and report the discrepancy rather than sampling down to match a
-  number we cannot reconstruct.
+- PlantVillage contains several photos of each leaf, so a random split can put the same
+  leaf in training and test; clean accuracy is optimistic for every model.
+- The placement, learning-rate and ViT-B K=3 ablations are single-seed.
+- AgriTL-ViT is reproduced from the paper's text; the exact wiring is our interpretation
+  (documented in `involeaf/models/agritl_vit.py`). It reaches 99.3% on tomato and 97.8% on
+  maize, against the paper's 98.5% and 97.2%.
+- In the last block, involution receives no gradient (the classification token bypasses
+  it and nothing follows), so ~0.6M parameters stay at their initial identity. Removing
+  it changes nothing measurable.
 
 ## Layout
 
 ```
-involeaf/ops/involution.py         the operator: shift + unfold paths, delta init
-involeaf/models/vit_involution.py  ViT surgery and the token-grid bridge
+involeaf/ops/involution.py         the operator: shift and unfold paths, delta / zero init
+involeaf/models/vit_involution.py  ViT surgery, variants, token-grid bridge
 involeaf/models/agritl_vit.py      AgriTL-ViT reproduction
-involeaf/models/registry.py        build_model, layer-wise param groups
-involeaf/data/                     splits, datasets, transforms, corruptions
-involeaf/engine/                   training and evaluation loops
-involeaf/utils/device.py           the only place that touches the accelerator
-involeaf/utils/metrics.py          metrics with the consistency guard
-configs/                           base.yaml + one file per model, ablations/
-scripts/                           prepare_data, train, eval_robustness, benchmark, make_tables
-splits/                            committed, deterministic
+involeaf/models/registry.py        build_model, layer-wise learning-rate groups
+involeaf/data/                     splits, datasets, transforms, test-time corruptions
+involeaf/engine/                   training (pause/resume) and evaluation
+involeaf/utils/                    device, metrics with consistency guard, profiling, paths
+configs/                           base.yaml, one file per model, ablations/
+scripts/                           data, train, eval, queue, status, benchmark, tables, plots
+splits/                            committed, deterministic splits
+results/                           result JSONs (tables and figures are regenerated)
 tests/                             pytest suite
 ```
+
+## References
+
+- D. Li et al., "Involution: Inverting the Inherence of Convolution for Visual
+  Recognition", CVPR 2021.
+- S. Srivastava, V. Sisaudia and S. Meena, "AgriTL-ViT: A Vision Transformer model with
+  attention techniques for classification of plant leaf disease", Expert Systems with
+  Applications 294, 128793, 2025.
+- D. P. Hughes and M. Salathé, "An open access repository of images on plant health to
+  enable the development of mobile disease diagnostics", arXiv:1511.08060 (PlantVillage).
+- D. Singh et al., "PlantDoc: A Dataset for Visual Plant Disease Detection", CoDS-COMAD 2020.
