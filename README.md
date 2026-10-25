@@ -23,11 +23,13 @@ On PlantVillage tomato (18,160 images, 3 seeds), with corruptions applied at tes
 | AgriTL-ViT | 100.0M | 21.1 | 99.3 | 71.0 | 89.9 | 87.7 | 46.2 | 18.9 |
 
 - **InvoLeaf matches ViT-B on clean accuracy with 25% fewer parameters and 23% fewer
-  MACs**, but it is less robust than plain ViT-B on every corruption and on field photos,
-  and slower per image (10.4 vs 4.5 ms) because involution has no fused GPU kernel.
-- **InvoLeaf beats AgriTL-ViT on every test** (colour +17, occlusion +10, combined +15,
-  field +9 points) while using 35% fewer parameters and 36% fewer MACs. AgriTL-ViT's
-  1×1 convolutions cannot mix spatial information; involution can.
+  MACs**, but is less robust than plain ViT-B under colour shift, blur, combined
+  corruption, low resolution and on field photos, in all three seeds (occlusion is a tie
+  within seed noise), and slower per image (10.4 vs 4.5 ms) because involution has no
+  fused GPU kernel.
+- **InvoLeaf beats AgriTL-ViT on every test in every seed** (colour +17, occlusion +10,
+  combined +15, field +9 points) while using 35% fewer parameters and 36% fewer MACs.
+  AgriTL-ViT's 1×1 convolutions cannot mix spatial information; involution can.
 - **The robustness cost scales with how many blocks get involution.** Four involution
   blocks instead of twelve come close to ViT-B's robustness but save only 8% of
   parameters (single seed).
@@ -36,7 +38,8 @@ On PlantVillage tomato (18,160 images, 3 seeds), with corruptions applied at tes
 - **A common occlusion test invents robustness differences.** `RandomErasing(value=
   "random")` before normalisation fills the box with values far outside the valid pixel
   range. Under it, InvoLeaf looked 10 points more robust than ViT-B and ResNet-50 sent
-  99.8% of images to one class; with a valid (black) patch both effects vanish.
+  99.8% of images to one class; with a valid (black) patch both effects vanish. (ResNet
+  stays fragile to noise *texture* even with valid pixels, the transformers do not.)
 - **The same ordering holds on maize**, a second crop, and **every model collapses on
   real field photographs** (PlantDoc: 19–36% after ~99% in the lab).
 

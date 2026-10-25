@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 """Why does involution trade colour robustness for occlusion robustness?
 
-    python scripts/analyze_mechanism.py                 # seed-42 checkpoints
+    python scripts/analyze_mechanism.py                 # seed-42 checkpoints, black patch
+    python scripts/analyze_mechanism.py --occlusion erasing   # the original noise patch
     python scripts/analyze_mechanism.py --smoke         # random weights, 8 images
 
 Inference only, on the same test images and the same seeded corruptions as
-eval_robustness.py, for ResNet-50, ViT-B/16 and InvoLeaf. Writes two files:
+eval_robustness.py, for ResNet-50, ViT-B/16 and InvoLeaf. Writes two files (with a
+``_black`` suffix on the tag for the default black-patch occlusion):
 
 results/mechanism_seed<N>.json
     Representation drift: for every stage of every model and every corruption, the
@@ -58,6 +60,9 @@ from involeaf.utils.logging import get_logger  # noqa: E402
 log = get_logger()
 
 MODELS = ["resnet50", "vit_b16_baseline", "involeaf_b16"]
+# Condition names used throughout this script and in its output files. "erasing" and
+# "combined" are the occlusion and combined slots; which corruption actually fills them
+# is set by --occlusion (see SOURCES in main).
 CONDS = ["colorjitter", "blur", "erasing", "combined"]
 VIZ_CONDS = ["clean", "colorjitter", "erasing"]
 SPLIT_FILE = "splits/plantvillage_tomato.json"
@@ -272,6 +277,10 @@ def main() -> None:
     ap.add_argument("--batch-size", type=int, default=25)
     ap.add_argument("--smoke", action="store_true",
                     help="untrained models and 8 images: checks the code, not the science")
+    ap.add_argument("--occlusion", choices=["erasing_black", "erasing"],
+                    default="erasing_black",
+                    help="occlusion fill: a black patch (default), or the original "
+                         "out-of-range noise patch that produced mechanism_seed42.json")
     args = ap.parse_args()
     if args.smoke:
         args.n_images, args.batch_size = 8, 4
@@ -284,7 +293,13 @@ def main() -> None:
     class_names = ds.class_names
     indices = np.unique(np.linspace(0, len(ds) - 1, args.n_images).round().astype(int))
     clean_tf = eval_transform()
-    corr_tf = {c: DeterministicCorruption(c, seed=0) for c in CONDS}
+    # The first version of this analysis (results/mechanism_seed42.json) used the
+    # out-of-range noise patch, which turned out to fabricate occlusion effects. The black
+    # patch uses the same boxes with valid pixels; "combined" follows the same choice.
+    sources = {"colorjitter": "colorjitter", "blur": "blur", "erasing": args.occlusion,
+               "combined": "combined_black" if args.occlusion == "erasing_black"
+               else "combined"}
+    corr_tf = {c: DeterministicCorruption(sources[c], seed=0) for c in CONDS}
 
     models = {name: load_model(name, args, device, len(class_names)) for name in MODELS}
     caps = {name: Capture(m) for name, m in models.items()}
@@ -378,9 +393,13 @@ def main() -> None:
         cap.remove()
 
     tag = "smoke" if args.smoke else f"seed{args.seed}"
+    if args.occlusion == "erasing_black":
+        tag += "_black"
     out = {
         "seed": args.seed,
         "smoke": args.smoke,
+        "occlusion": sources["erasing"],
+        "combined": sources["combined"],
         "n_images": int(len(indices)),
         "split_file": SPLIT_FILE,
         "corruption_seed": 0,

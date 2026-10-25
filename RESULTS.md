@@ -10,12 +10,13 @@ Figures: `python scripts/make_plots.py` and `python scripts/plot_mechanism.py` w
 
 Replacing the feed-forward slot of every ViT-B/16 block with involution followed by a
 half-width FFN (InvoLeaf) keeps clean accuracy at the ViT-B level (99.9%) with **25% fewer
-parameters and 23% fewer MACs**, but it is **less robust than plain ViT-B on every
-realistic corruption and on field photographs**, and 2.3× slower per image because
-involution has no fused GPU kernel. Against the published AgriTL-ViT design, which fills
-the same slot with 1×1 convolutions and doubles attention, InvoLeaf is **better on every
-test** (colour +17, occlusion +10, combined +15, field +9 points) while using 35% fewer
-parameters and 36% fewer MACs. The robustness cost scales with the number of blocks that
+parameters and 23% fewer MACs**, but it is **less robust than plain ViT-B under colour
+shift, blur, combined corruption, low resolution and on field photographs, in every one
+of the three seeds** (on occlusion alone the two are within seed-to-seed variation), and
+2.3× slower per image because involution has no fused GPU kernel. Against the published
+AgriTL-ViT design, which fills the same slot with 1×1 convolutions and doubles attention,
+InvoLeaf is **better on every test in every seed** (colour +17, occlusion +10, combined
++15, field +9 points) while using 35% fewer parameters and 36% fewer MACs. The robustness cost scales with the number of blocks that
 receive involution: with four blocks instead of twelve the model is about as robust as
 ViT-B, but saves only 8% of parameters. A second crop (maize) reproduces the same
 ordering. Along the way we found that a widely used occlusion test (random erasing with
@@ -56,6 +57,17 @@ physically valid patch the effect disappears.
 | ResNet-50 | 23.5M | 99.4 ± 0.1 | 89.2 ± 0.2 | 74.1 ± 2.2 | 98.3 ± 0.1 | 59.1 ± 1.9 | 84.4 ± 2.8 | 34.0 ± 0.5 |
 | AgriTL-ViT | 100.0M | 99.3 ± 0.2 | 71.0 ± 1.5 | 89.9 ± 0.4 | 87.7 ± 0.5 | 46.2 ± 2.4 | 91.9 ± 1.0 | 18.9 ± 0.8 |
 
+**Per-seed comparison** (same seed, same corrupted images), which is stronger evidence
+than overlapping ± bars:
+
+| InvoLeaf minus … | Colour | Blur | Occlusion | In-range noise | Combined | 128 px | Field |
+|---|---|---|---|---|---|---|---|
+| ViT-B, seeds 42 / 43 / 44 | −6.6 / −5.7 / −5.8 | −3.2 / −4.0 / −3.7 | −3.0 / −0.7 / +0.4 | −6.1 / −1.2 / −2.1 | −18.8 / −11.0 / −4.4 | −1.9 / −2.9 / −2.1 | −13.0 / −7.9 / −1.9 |
+| AgriTL-ViT, seeds 42 / 43 / 44 | +14.5 / +17.4 / +18.3 | +4.9 / +2.5 / +3.7 | +9.0 / +9.9 / +10.2 | +4.5 / +5.3 / +7.2 | +9.8 / +13.6 / +21.1 | – | +7.1 / +8.8 / +12.3 |
+
+InvoLeaf is below ViT-B in all three seeds on every test except occlusion, where the
+sign flips between seeds; it is above AgriTL-ViT on every test in every seed.
+
 Field-photo macro-F1 over the 9 classes present: ViT-B 0.241, ResNet 0.215, InvoLeaf
 0.189, AgriTL 0.109. Every model loses 60–80 points from lab to field; none is usable on
 field photos, which is the strongest argument in the report for field-collected data.
@@ -94,9 +106,15 @@ results. With the **same boxes** filled by valid pixels:
 
 With the noise patch, InvoLeaf looked 10 points more occlusion-robust than ViT-B, and
 ResNet-50 sent 99.8% of occluded images to one class (Yellow Leaf Curl Virus). Both
-effects vanish with valid pixels. **fig7** shows ResNet's prediction distribution under
+effects vanish with a black patch. **fig7** shows ResNet's prediction distribution under
 both fills. The point for the report: a robustness benchmark must keep the perturbed image
 inside the valid input range, or it measures sensitivity to impossible inputs.
+
+One nuance: ResNet-50's weakness to *noise texture* is partly real. With in-range uniform
+noise it still drops on maize to 29 ± 8% (on seeds 43 and 44 over 90% of images go to a
+single class, a different class per seed) and on tomato seed 43 it sends 39% of images to
+Yellow Leaf Curl Virus. The out-of-range values exaggerate it to a total collapse; the
+transformers are not affected by in-range noise at all.
 
 ## Ablations
 
@@ -153,14 +171,22 @@ kernels stay at the identity they started from (~0.6M unused parameters). Droppi
 | AgriTL-ViT | 97.8 ± 0.1 | 92.3 ± 0.7 | 96.9 ± 0.7 | 62.2 ± 1.0 | 64.8 ± 0.8 |
 
 Same ordering as tomato. Our AgriTL-ViT reproduction reaches 97.8% on maize against the
-97.2% the paper reports, so the reproduction is faithful. ResNet-50 drops to 29.4 ± 8.4%
-on in-range uniform noise patches (tomato: 94.6%): CNNs react to noise texture even when
-the pixels are valid.
+97.2% the paper reports, consistent with the published accuracy. ResNet-50 drops to
+29.4 ± 8.4% on in-range uniform noise patches (tomato: 94.6%): CNNs react to noise texture
+even when the pixels are valid. Almost all clean maize errors are Northern Leaf Blight
+predicted as Cercospora leaf spot, two visually similar diseases (e.g. InvoLeaf seed 43:
+17 of 147). With 578 test images, one image is 0.17 points; checkpoints were chosen on an
+equally small validation set, so maize test F1 sits 2–4 points below validation F1 for
+ResNet and InvoLeaf.
 
 ## Mechanism and interpretability (seed 42, `results/mechanism_seed42.json`)
 
 Caveat: this analysis was run before the occlusion issue was found, so its "occlusion"
-condition is the out-of-range noise patch; the colour-shift results are unaffected.
+condition is the out-of-range noise patch; the colour-shift results are unaffected. A
+black-patch re-run (`python scripts/analyze_mechanism.py`, which now defaults to
+`--occlusion erasing_black` and writes `results/mechanism_seed42_black.json`) replaces
+the occlusion panels of figures 8–10; until it exists, those panels show the noise patch
+and say so in their titles.
 
 - **The kernels are not the weak point.** Under every corruption, InvoLeaf's generated
   kernels change about 5× less than their inputs; colour shift moves them least (0.083
@@ -181,15 +207,19 @@ Claim:
 - InvoLeaf matches ViT-B clean accuracy at 25% fewer parameters and 23% fewer MACs.
 - InvoLeaf beats AgriTL-ViT on accuracy, every robustness test and cost; 1×1 convolutions
   cannot mix spatial information, involution can, and it shows.
-- Involution costs robustness relative to plain ViT-B; the cost grows with the number of
+- Involution costs robustness relative to plain ViT-B (colour, blur, combined, low
+  resolution, field: worse in all three seeds); the cost grows with the number of
   involution blocks and is not explained by the learning rate.
+- On occlusion, InvoLeaf and ViT-B are statistically indistinguishable.
 - Kernel size does not matter; K=3 is the efficient choice.
 - The out-of-range occlusion test creates false robustness results.
 - All models, ours included, fail on field photos (18–36%).
 
 Do not claim:
 - That InvoLeaf is more robust than ViT-B (it is not, on any realistic test).
-- That ResNet-50 collapses under occlusion (only under the out-of-range patch).
+- That InvoLeaf is worse than ViT-B under occlusion specifically (within seed noise).
+- That ResNet-50 collapses under occlusion: with a black patch it does not; only
+  noise-textured patches hurt it (badly on maize, mildly on tomato).
 - That InvoLeaf is faster (it is slower in wall-clock time).
 - Any number from `results/superseded/` (the first `parallel` run started from a
   perturbed initialisation; fixed and rerun).
@@ -199,6 +229,9 @@ Do not claim:
 - PlantVillage contains several photos of the same leaf, so a random split can place one
   leaf in both training and test; clean accuracy is optimistic for all models alike.
 - Placement, learning-rate, first11 and ViT-B K=3 ablations are single-seed.
+- `vit_b16_baseline` seed 42 was paused after epoch 8 and resumed from its full saved
+  state (weights, optimiser, scheduler, random-number streams); every other run trained
+  in one go.
 - The seed-42 ViT-S kernel-ablation runs predate the in-range occlusion tests, so those
   columns average seeds 43 and 44 only.
 - Retrained ResNet-50 and InvoLeaf runs are reproducible only to a few tenths of a point

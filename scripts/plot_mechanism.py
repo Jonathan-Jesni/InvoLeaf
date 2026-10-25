@@ -48,6 +48,12 @@ SEQ_CMAP = LinearSegmentedColormap.from_list(
     "seq", ["#f7f9fc", "#cde2fb", "#86b6ef", "#3987e5", "#1c5cab", "#0d366b"])
 
 
+def _patch(meta: dict) -> str:
+    """Which occlusion fill the analysis used (files before 2026-10-25 used the noise patch)."""
+    return ("black patch" if meta.get("occlusion") == "erasing_black"
+            else "out-of-range noise patch")
+
+
 def _short(name: str) -> str:
     return SHORT_CLASS.get(name.split("___", 1)[-1], name)
 
@@ -129,7 +135,8 @@ def fig_gradcam(meta: dict, npz, rows: list[int], out: Path) -> None:
                 axes[row, 0].set_title("Input", fontsize=10, loc="center")
                 for m_i, (_, label) in enumerate(COLUMNS, start=1):
                     axes[row, m_i].set_title(label, fontsize=10, loc="center")
-    fig.suptitle("Grad-CAM for the predicted class: where each model looks",
+    fig.suptitle(f"Grad-CAM for the predicted class: where each model looks "
+                 f"(occlusion: {_patch(meta)})",
                  x=0.02, ha="left", fontsize=12, fontweight="semibold", color=INK)
     fig.tight_layout()
     _save(fig, out, "fig8_gradcam")
@@ -162,7 +169,8 @@ def fig_kernel_maps(meta: dict, npz, pos: int, out: Path) -> None:
     cbar.set_label("Share of kernel weight on neighbours", color=INK_2)
     cbar.outline.set_visible(False)
     cbar.ax.tick_params(colors=INK_2, length=0)
-    fig.suptitle("InvoLeaf's generated kernels: how much each location mixes its neighbours",
+    fig.suptitle(f"InvoLeaf's generated kernels: how much each location mixes its "
+                 f"neighbours (occlusion: {_patch(meta)})",
                  x=0.02, ha="left", fontsize=12, fontweight="semibold", color=INK)
     _save(fig, out, "fig9_kernel_maps")
 
@@ -180,7 +188,7 @@ def fig_drift(meta: dict, npz, out: Path) -> None:
     panels = [
         ("colorjitter", "stage_drift", "kernel_drift", "Colour shift: drift of all tokens"),
         ("erasing", "stage_drift_outside", "kernel_drift_outside",
-         "Occlusion: drift of tokens outside the erased box"),
+         f"Occlusion ({_patch(meta)}): drift outside the box"),
     ]
     for ax, (cond, key, kkey, title) in zip(axes, panels):
         for model, color, label in [("vit_b16_baseline", ORANGE, "ViT-B/16 features"),
@@ -217,12 +225,16 @@ def fig_drift(meta: dict, npz, out: Path) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--tag", default="seed42")
+    ap.add_argument("--tag", default=None,
+                    help="default: seed42_black if present, else seed42 (noise patch)")
     ap.add_argument("--classes", default="Early_blight,Late_blight,Septoria",
                     help="comma-separated class-name fragments, first test image of each")
     ap.add_argument("--out", default="results/figures")
     args = ap.parse_args()
 
+    if args.tag is None:
+        args.tag = ("seed42_black" if (RESULTS / "mechanism_seed42_black.json").exists()
+                    else "seed42")
     meta = json.loads((RESULTS / f"mechanism_{args.tag}.json").read_text(encoding="utf-8"))
     npz = np.load(RESULTS / f"interp_{args.tag}.npz")
     out = REPO / args.out

@@ -214,15 +214,23 @@ def fig_robustness(evals, models: list[str], title: str, name: str, out: Path) -
     width = 0.8 / len(present)
     xs = range(len(CONDITIONS))
     for i, m in enumerate(present):
-        means, errs = [], []
+        means, errs, counts = [], [], []
         for _, get in CONDITIONS:
             s = _stats(evals[m], get)
             # A run evaluated before a test existed has no bar there, rather than a
             # zero-height bar that would read as 0% accuracy.
             means.append(s[0] * 100 if s else float("nan"))
             errs.append(s[1] * 100 if s else float("nan"))
+            counts.append(s[2] if s else 0)
         offsets = [x - 0.4 + width * (i + 0.5) for x in xs]
         n = len(evals[m])
+        # The legend gives the model's seed count; a bar that averages fewer seeds (a
+        # test added after some runs were evaluated) says so on the bar itself.
+        for x, y, e, k in zip(offsets, means, errs, counts):
+            if 0 < k < n:
+                ax.annotate(f"n={k}", (x, y + (e if e == e else 0)), xytext=(0, 3),
+                            textcoords="offset points", ha="center", fontsize=6.5,
+                            color=INK_2)
         # A surface-coloured edge gives the 2px gap between adjacent bars.
         ax.bar(offsets, means, width, color=MODELS[m]["color"], edgecolor=SURFACE,
                linewidth=1.2, label=f"{MODELS[m]['label']}  ({_seed_note(n)})", zorder=2)
@@ -244,11 +252,14 @@ def fig_tradeoff(evals, out: Path) -> None:
     occ = CONDITIONS[3][1]
     col = CONDITIONS[1][1]
     pts = {}
+    fewer = []
     for m in MODELS:
         if evals.get(m):
             sx, sy = _stats(evals[m], occ), _stats(evals[m], col)
             if sx and sy:
                 pts[m] = (sx[0] * 100, sy[0] * 100, sx[1] * 100, sy[1] * 100)
+                if sx[2] < len(evals[m]):
+                    fewer.append((MODELS[m]["label"], sx[2]))
     if not pts:
         print("  skipped fig3_tradeoff: no evaluation results")
         return
@@ -275,6 +286,12 @@ def fig_tradeoff(evals, out: Path) -> None:
     _shape_legend(ax)
     ax.text(0.99, 0.02, "Arrows: plain ViT → same ViT with involution", transform=ax.transAxes,
             ha="right", va="bottom", fontsize=8, color=MUTED)
+    if fewer:
+        counts = sorted({k for _, k in fewer})
+        note = "; ".join(
+            f"occlusion averages {k} seeds for " + ", ".join(lab for lab, kk in fewer if kk == k)
+            for k in counts)
+        fig.text(0.01, -0.01, note[0].upper() + note[1:], fontsize=7.5, color=MUTED)
     _save(fig, out, "fig3_tradeoff")
 
 

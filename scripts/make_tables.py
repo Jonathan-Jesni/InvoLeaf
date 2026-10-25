@@ -178,15 +178,26 @@ def robustness_table(maize: bool = False) -> str:
         robs = [r.get("robustness", {}) for r in group]
         row = [name, _seeds(group)]
         for c in corruptions:
-            row.append(_cell([rob[c]["accuracy"] for rob in robs if c in rob]))
+            vals = [rob[c]["accuracy"] for rob in robs if c in rob]
+            cell = _cell(vals)
+            # A run evaluated before a test existed has no value there; say how many
+            # seeds the cell averages so it is not read as covering every listed seed.
+            if vals and len(vals) < len(robs):
+                cell += f" (n={len(vals)})"
+            row.append(cell)
         # The drop is computed per seed, then averaged, so its spread is the spread of
         # the drop itself rather than a combination of two separately averaged columns.
-        drops = [rob["clean"]["accuracy"] - rob["combined"]["accuracy"]
-                 for rob in robs if "clean" in rob and "combined" in rob]
-        row.append(_cell(drops, scale=100, digits=1))
+        for combined in ("combined", "combined_black"):
+            drops = [rob["clean"]["accuracy"] - rob[combined]["accuracy"]
+                     for rob in robs if "clean" in rob and combined in rob]
+            cell = _cell(drops, scale=100, digits=1)
+            if drops and len(drops) < len(robs):
+                cell += f" (n={len(drops)})"
+            row.append(cell)
         rows.append(row)
     return _md_table(
-        ["model", "seeds"] + corruptions + ["clean-combined drop (pp)"], rows
+        ["model", "seeds"] + corruptions
+        + ["clean-combined drop (pp)", "clean-combined_black drop (pp)"], rows
     ) + SEED_NOTE + OCCLUSION_NOTE
 
 
