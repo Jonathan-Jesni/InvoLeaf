@@ -54,6 +54,7 @@ from timm.layers import Mlp
 from involeaf.ops.involution import Involution2d
 
 VARIANTS = ("pure", "inv_ffn", "parallel")
+SPATIAL_OPS = ("involution", "dwconv")
 
 
 def resolve_block_indices(spec: str, depth: int) -> list[int]:
@@ -99,6 +100,7 @@ class InvoLeafFFN(nn.Module):
         cls_mode: str = "identity",
         drop: float = 0.0,
         ffn_lr: str = "new",
+        spatial_op: str = "involution",
     ) -> None:
         super().__init__()
         if variant not in VARIANTS:
@@ -107,21 +109,40 @@ class InvoLeafFFN(nn.Module):
             raise ValueError(f"unknown cls_mode {cls_mode!r}")
         if ffn_lr not in ("new", "backbone"):
             raise ValueError(f"ffn_lr must be 'new' or 'backbone', got {ffn_lr!r}")
+        if spatial_op not in SPATIAL_OPS:
+            raise ValueError(f"spatial_op must be one of {SPATIAL_OPS}, got {spatial_op!r}")
 
         self.dim = dim
         self.variant = variant
         self.num_prefix_tokens = num_prefix_tokens
         self.cls_mode = cls_mode
+        self.spatial_op = spatial_op
 
-        self.involution = Involution2d(
-            channels=dim,
-            kernel_size=kernel_size,
-            group_channels=group_channels,
-            reduction_ratio=reduction_ratio,
-            norm_layer=norm_layer,
-            impl=impl,
-            delta_init=delta_init,
-        )
+        if spatial_op == "involution":
+            self.involution = Involution2d(
+                channels=dim,
+                kernel_size=kernel_size,
+                group_channels=group_channels,
+                reduction_ratio=reduction_ratio,
+                norm_layer=norm_layer,
+                impl=impl,
+                delta_init=delta_init,
+            )
+        else:
+            # Control: the same slot, kernel size and initialisation, but an ordinary
+            # depthwise convolution. Involution generates one kernel per location from
+            # that location's features and shares it across channels; a depthwise conv
+            # learns one fixed kernel per channel and shares it across locations. If
+            # this control loses the same robustness, the cost comes from adding local
+            # mixing to the FFN slot, not from involution's content-generated kernels.
+            self.involution = None
+            self.dwconv = nn.Conv2d(dim, dim, kernel_size, padding=kernel_size // 2,
+                                    groups=dim, bias=True)
+            if delta_init:
+                with torch.no_grad():
+                    self.dwconv.weight.zero_()
+                    self.dwconv.weight[:, 0, kernel_size // 2, kernel_size // 2] = 1.0
+                    self.dwconv.bias.zero_()
 
         if variant == "pure":
             self.ffn = None
@@ -134,8 +155,12 @@ class InvoLeafFFN(nn.Module):
             # block, which needs the added branch to output zero, not the identity that
             # delta initialisation gives (that would add norm2(x) to the residual stream
             # in every block at step 0). Runs before 2026-10-19 lacked this.
-            if delta_init:
+            if delta_init and self.involution is not None:
                 self.involution.zero_init_()
+            elif delta_init:
+                with torch.no_grad():
+                    self.dwconv.weight.zero_()
+                    self.dwconv.bias.zero_()
 
         # Prefix tokens skip the spatial op. "linear" gives them a parallel channel-mix
         # so they are not simply frozen relative to the patch tokens.
@@ -153,7 +178,7 @@ class InvoLeafFFN(nn.Module):
         if ffn_lr == "new" or self.ffn is None:
             self._involeaf_new = True
         else:
-            mark_new(self.involution)
+            mark_new(self.involution if self.involution is not None else self.dwconv)
             mark_new(self.cls_proj)
 
     @staticmethod
@@ -167,11 +192,12 @@ class InvoLeafFFN(nn.Module):
         return side, side
 
     def _spatial(self, patches: torch.Tensor) -> torch.Tensor:
-        """(B, P, C) -> involution -> (B, P, C)."""
+        """(B, P, C) -> involution (or the depthwise-conv control) -> (B, P, C)."""
         b, p, c = patches.shape
         h, w = self._grid_hw(p)
         grid = patches.transpose(1, 2).reshape(b, c, h, w)
-        grid = self.involution(grid)
+        op = self.involution if self.involution is not None else self.dwconv
+        grid = op(grid)
         return grid.flatten(2).transpose(1, 2)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -244,6 +270,7 @@ def build_involeaf(
     ffn_init: str = "slice",
     cls_mode: str = "identity",
     ffn_lr: str = "new",
+    spatial_op: str = "involution",
     dynamic_img_size: bool = True,
     **timm_kwargs,
 ) -> nn.Module:
@@ -278,6 +305,7 @@ def build_involeaf(
             ffn_ratio=ffn_ratio,
             cls_mode=cls_mode,
             ffn_lr=ffn_lr,
+            spatial_op=spatial_op,
         )
         if pretrained and new_mlp.ffn is not None and isinstance(old_mlp, Mlp):
             init_ffn_from_pretrained(new_mlp.ffn, old_mlp, mode=ffn_init)
@@ -297,6 +325,7 @@ def build_involeaf(
         "ffn_init": ffn_init,
         "cls_mode": cls_mode,
         "ffn_lr": ffn_lr,
+        "spatial_op": spatial_op,
     }
     return model
 

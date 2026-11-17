@@ -201,6 +201,44 @@ def test_ffn_lr_backbone_moves_the_ffn_to_the_pretrained_group():
     assert id(fc1) in groups["pretrained"]
 
 
+def test_dwconv_control_starts_as_identity():
+    """Same starting point as involution: the spatial op passes tokens through."""
+    ffn = InvoLeafFFN(dim=32, variant="pure", num_prefix_tokens=0, kernel_size=7,
+                      spatial_op="dwconv")
+    x = torch.randn(2, 16, 32)
+    assert torch.allclose(ffn(x), x, atol=1e-6)
+
+
+def test_dwconv_control_parallel_starts_as_its_ffn_alone():
+    ffn = InvoLeafFFN(dim=32, variant="parallel", num_prefix_tokens=1, kernel_size=3,
+                      spatial_op="dwconv")
+    x = torch.randn(2, 1 + 16, 32)
+    assert torch.allclose(ffn(x), ffn.ffn(x), atol=1e-6)
+
+
+def test_dwconv_control_trains_and_mixes_space():
+    """The conv weights get a gradient, and after a change they do mix neighbours."""
+    ffn = InvoLeafFFN(dim=32, variant="pure", num_prefix_tokens=0, kernel_size=3,
+                      spatial_op="dwconv")
+    ffn(torch.randn(2, 16, 32)).sum().backward()
+    assert ffn.dwconv.weight.grad.abs().sum() > 0
+    with torch.no_grad():
+        ffn.dwconv.weight.normal_()
+    x = torch.zeros(1, 16, 32)
+    x[0, 5] = 1.0                       # one token on
+    out = ffn(x)
+    assert (out[0].abs().sum(-1) > 0).sum() > 1   # the signal reached its neighbours
+
+
+def test_dwconv_control_model_builds_with_the_new_lr_group():
+    model = build_involeaf(backbone=BACKBONE, pretrained=False, num_classes=10,
+                           spatial_op="dwconv")
+    assert model(torch.randn(1, 3, 224, 224)).shape == (1, 10)
+    assert not involution_modules(model)
+    assert "blocks.0.mlp.dwconv.weight" in new_parameter_names(model)
+    assert model.involeaf_meta["spatial_op"] == "dwconv"
+
+
 def test_backward_pass_reaches_involution():
     model = build_involeaf(backbone=BACKBONE, pretrained=False, num_classes=10)
     model(torch.randn(2, 3, 224, 224)).sum().backward()

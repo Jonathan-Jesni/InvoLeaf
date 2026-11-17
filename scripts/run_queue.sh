@@ -88,6 +88,7 @@ estimate () {
     maize_resnet50|maize_vit_b16_baseline) echo 8 ;;
     maize_agritl_vit)     echo 12 ;;
     maize_involeaf_b16)   echo 15 ;;
+    abl_spatial_dwconv)   echo 25 ;;
     abl_*)                echo 55 ;;
     *)                    echo 45 ;;
   esac
@@ -269,6 +270,14 @@ phase_M () {
   done
 }
 
+phase_X () {
+  echo "=== Phase X - control: depthwise convolution instead of involution (ViT-B) ==="
+  # Same slot, kernel size and initialisation as InvoLeaf, but a fixed per-channel
+  # kernel instead of a content-generated one. Asks whether the robustness cost is
+  # specific to involution or comes with any local operator in the FFN slot.
+  run configs/ablations/spatial_dwconv.yaml abl_spatial_dwconv
+}
+
 phase_F () {
   echo "=== Phase F - efficiency benchmark (one machine only) ==="
   [[ $STOP -eq 1 ]] && return 0
@@ -305,6 +314,7 @@ usage: SEED=<n> [BUDGET_MIN=<minutes>] bash scripts/run_queue.sh <phase> [phase.
   D  design ablations on ViT-B (FFN at the pretrained LR, no delta init, K=3,
      BatchNorm, random FFN init, group size 64 and 768)
   M  maize: ResNet-50, ViT-B, InvoLeaf, AgriTL-ViT on a second crop
+  X  control: depthwise convolution in place of involution (ViT-B)
 
 Run the same command at the start of every session; it picks up what is left.
 USAGE
@@ -317,8 +327,8 @@ stage_data
 for phase in "$@"; do
   case "$phase" in
     S|s) phase_S ;; C|c) phase_C ;; E|e) phase_E ;; F|f) phase_F ;;
-    P|p) phase_P ;; D|d) phase_D ;; M|m) phase_M ;;
-    *) echo "unknown phase '${phase}' - expected S, C, E, F, P, D or M"; exit 1 ;;
+    P|p) phase_P ;; D|d) phase_D ;; M|m) phase_M ;; X|x) phase_X ;;
+    *) echo "unknown phase '${phase}' - expected S, C, E, F, P, D, M or X"; exit 1 ;;
   esac
 done
 

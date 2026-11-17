@@ -1,0 +1,8 @@
+# Control for InvoLeaf: a 7x7 depthwise convolution in place of involution, everything
+# else identical (all 12 blocks, FFN_r2 after it, identity at step 0, same learning
+# rates). Added 2026-11-17, after the main results, to answer one question: is the
+# robustness cost specific to involution's content-generated kernels, or does any local
+# operator in the FFN slot cost the same? Not used to choose or tune InvoLeaf.
+_base_: ../involeaf_b16.yaml
+name: abl_spatial_dwconv
+spatial_op: dwconv

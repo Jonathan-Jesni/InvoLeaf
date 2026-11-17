@@ -29,11 +29,13 @@ PHASES = {
           "abl_ffninit_random", "abl_groups_gc64", "abl_groups_gc768"],
     "M": ["maize_resnet50", "maize_vit_b16_baseline", "maize_involeaf_b16",
           "maize_agritl_vit"],
+    "X": ["abl_spatial_dwconv"],
 }
 # The split agreed for the project: every seed runs S, plus one ablation each. The
 # second round (Oct 19) repeats the kernel and variant ablations on all three seeds,
 # adds the planned ViT-B ablations (P, D) on seed 42 and maize (M) on every seed.
-PLAN = {42: "SCEPDM", 43: "SCEM", 44: "SCEFM"}
+# X (depthwise-conv control, added 2026-11-17) runs on all three seeds.
+PLAN = {42: "SCEPDMX", 43: "SCEMX", 44: "SCEFMX"}
 
 
 def active_runs() -> dict[str, str]:
