@@ -116,11 +116,9 @@ use, whichever architecture is used.
 | ViT-B/16 | 85.8M | 17.58 | 4.5 ms | 4.8 GB |
 | **InvoLeaf** | 64.7M | 13.50 | 10.4 ms | 29.5 GB (`unfold`; ~6.9 GB with `shift`) |
 | InvoLeaf, K=3 | 60.3M | 12.57 | – | – |
-| Depthwise-conv control | 57.9M | ≈12.1† | – | 4.3 GB‡ |
+| Depthwise-conv control | 57.9M | 12.09 | – | 4.3 GB‡ |
 | AgriTL-ViT | 100.0M | 21.10 | 12.7 ms | 8.0 GB |
 
-† Analytic estimate (InvoLeaf minus the kernel-generating layers, plus the 7×7
-depthwise convolution), not yet counted by `benchmark.py --flops-only`.
 ‡ From the training logs (InvoLeaf's training logs give 30.0 GB on the same
 measurement). Training time per run: control 22 min, InvoLeaf 45 min, ViT-B 13 min.
 
@@ -325,7 +323,7 @@ Do not claim:
   FFN cannot be separated from the cost of adding a spatial operator. `parallel` (full FFN
   plus involution) also loses field accuracy, which points at the spatial operator, but
   that is one indirect data point.
-- The depthwise-conv control's latency and exact MACs were not benchmarked.
+- The depthwise-conv control's latency was not benchmarked.
 - The seed-42 ViT-S kernel-ablation runs and `pure` seed 43 were retrained on Nov 17 to
   get the in-range occlusion tests (their checkpoints had been deleted); their other
   numbers moved by a few tenths, like the other retrains.

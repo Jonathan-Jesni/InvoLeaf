@@ -26,7 +26,7 @@
           "aten::add_",
           "aten::max_pool2d"
         ],
-        "thop_error": "No module named 'thop'",
+        "thop_gmacs": 4.1317,
         "involution_analytic_gmacs": 0.0,
         "attention_analytic_gmacs": 0.0,
         "total_gmacs": 4.1095
@@ -52,7 +52,7 @@
           "aten::gelu",
           "aten::scaled_dot_product_attention"
         ],
-        "thop_error": "No module named 'thop'",
+        "thop_gmacs": 16.8477,
         "involution_analytic_gmacs": 0.0,
         "attention_analytic_gmacs": 0.7153,
         "total_gmacs": 17.582
@@ -78,7 +78,7 @@
           "aten::max_pool1d",
           "aten::scaled_dot_product_attention"
         ],
-        "thop_error": "No module named 'thop'",
+        "thop_gmacs": 19.6437,
         "involution_analytic_gmacs": 0.0,
         "attention_analytic_gmacs": 1.4307,
         "total_gmacs": 21.0951
@@ -107,7 +107,7 @@
           "aten::scaled_dot_product_attention",
           "aten::sum"
         ],
-        "thop_error": "No module named 'thop'",
+        "thop_gmacs": 12.6793,
         "involution_analytic_gmacs": 0.0885,
         "attention_analytic_gmacs": 0.7153,
         "total_gmacs": 13.5043
@@ -133,7 +133,7 @@
           "aten::gelu",
           "aten::scaled_dot_product_attention"
         ],
-        "thop_error": "No module named 'thop'",
+        "thop_gmacs": 4.2408,
         "involution_analytic_gmacs": 0.0,
         "attention_analytic_gmacs": 0.3577,
         "total_gmacs": 4.608
@@ -162,7 +162,7 @@
           "aten::scaled_dot_product_attention",
           "aten::sum"
         ],
-        "thop_error": "No module named 'thop'",
+        "thop_gmacs": 3.1987,
         "involution_analytic_gmacs": 0.0443,
         "attention_analytic_gmacs": 0.3577,
         "total_gmacs": 3.6113
@@ -190,7 +190,7 @@
           "aten::scaled_dot_product_attention",
           "aten::sum"
         ],
-        "thop_error": "No module named 'thop'",
+        "thop_gmacs": 7.1019,
         "involution_analytic_gmacs": 0.0885,
         "attention_analytic_gmacs": 0.7153,
         "total_gmacs": 7.9269
@@ -219,7 +219,7 @@
           "aten::scaled_dot_product_attention",
           "aten::sum"
         ],
-        "thop_error": "No module named 'thop'",
+        "thop_gmacs": 18.2567,
         "involution_analytic_gmacs": 0.0885,
         "attention_analytic_gmacs": 0.7153,
         "total_gmacs": 19.0817
@@ -248,7 +248,7 @@
           "aten::scaled_dot_product_attention",
           "aten::sum"
         ],
-        "thop_error": "No module named 'thop'",
+        "thop_gmacs": 13.0267,
         "involution_analytic_gmacs": 0.0811,
         "attention_analytic_gmacs": 0.7153,
         "total_gmacs": 13.8441
@@ -277,10 +277,36 @@
           "aten::scaled_dot_product_attention",
           "aten::sum"
         ],
-        "thop_error": "No module named 'thop'",
+        "thop_gmacs": 11.8123,
         "involution_analytic_gmacs": 0.0163,
         "attention_analytic_gmacs": 0.7153,
         "total_gmacs": 12.565
+      }
+    },
+    "abl_spatial_dwconv": {
+      "params": {
+        "total": 57937162,
+        "trainable": 57937162,
+        "total_m": 57.937
+      },
+      "flops": {
+        "input_size": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "unit": "GMACs",
+        "fvcore_gmacs": 11.3778,
+        "fvcore_uncounted": [
+          "aten::add",
+          "aten::gelu",
+          "aten::scaled_dot_product_attention"
+        ],
+        "thop_gmacs": 11.3589,
+        "involution_analytic_gmacs": 0.0,
+        "attention_analytic_gmacs": 0.7153,
+        "total_gmacs": 12.0931
       }
     }
   }

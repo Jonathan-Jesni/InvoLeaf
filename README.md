@@ -37,8 +37,8 @@ On PlantVillage tomato (18,160 images, 3 seeds), with corruptions applied at tes
   is 2.4× cheaper to train).
 - **The cost is not specific to involution.** A control with a fixed 7×7 depthwise
   convolution in the same slot (3 seeds) matches InvoLeaf on every realistic test
-  (colour 87.9, occlusion 97.8, combined 58.0, field 27.7) with 57.9M parameters and half
-  the training time. Involution's content-generated kernels bring no measurable benefit
+  (colour 87.9, occlusion 97.8, combined 58.0, field 27.7) with 57.9M parameters,
+  12.1 GMACs (InvoLeaf 13.5) and half the training time. Involution's content-generated kernels bring no measurable benefit
   over a static kernel here; what costs robustness is replacing the MLP with a local
   operator plus a half-width FFN.
 - **A common occlusion test invents robustness differences.** `RandomErasing(value=
