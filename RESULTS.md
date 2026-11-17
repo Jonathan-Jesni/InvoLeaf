@@ -73,6 +73,36 @@ Field-photo macro-F1 over the 9 classes present: ViT-B 0.241, ResNet 0.215, Invo
 field photos, which is the strongest argument in the report for field-collected data.
 Figure: **fig1** (all conditions), **fig4** (lab vs field), **fig3** (colour vs occlusion).
 
+### Per class (3 seeds)
+
+On the lab test set every class is easy for every model: clean F1 is at least 0.98 for
+all ten classes and all four models (ViT-B and InvoLeaf ≥ 0.994; the weakest cells are
+ResNet and AgriTL-ViT on Early blight, 0.988 / 0.983, and Target spot, 0.984 / 0.987).
+
+On field photos the picture changes completely. Recall per class (share of each class's
+field images classified correctly):
+
+| Class (field images) | ViT-B | InvoLeaf | ResNet-50 | AgriTL-ViT |
+|---|---|---|---|---|
+| Late blight (111) | **0.96** | 0.58 | 0.78 | 0.78 |
+| Early blight (88) | 0.44 | **0.76** | 0.60 | 0.27 |
+| Septoria leaf spot (151) | 0.45 | 0.31 | **0.56** | 0.07 |
+| Yellow leaf curl virus (76) | **0.35** | 0.21 | 0.19 | 0.15 |
+| Healthy (63) | **0.15** | 0.11 | 0.11 | 0.04 |
+| Bacterial spot (110) | **0.13** | 0.06 | 0.01 | 0.05 |
+| Leaf mould (91) | 0.04 | 0.05 | **0.08** | 0.01 |
+| Mosaic virus (54) | 0.01 | 0.00 | 0.01 | 0.00 |
+| Spider mites (2) | 0 | 0 | 0 | 0 |
+
+The models do not degrade evenly: on field photos they fall back on one or two
+"blight-like" answers. Share of all field predictions going to the most-predicted class:
+ViT-B 44% Late blight, InvoLeaf 47% Early blight, ResNet 33% Late blight, AgriTL-ViT 58%
+Late blight. Bacterial spot, leaf mould, mosaic virus and healthy leaves are almost never
+recognised; most healthy field leaves are called diseased. So the field accuracies in the
+main table mostly measure how often a photo happens to show a blight. This is the clearest
+evidence in the project that lab-trained leaf-disease classifiers are not ready for field
+use, whichever architecture is used.
+
 ## Cost (`results/flops.json`, `results/benchmark.json`)
 
 | Model | Params | GMACs | GPU latency, batch 1 | Peak training memory, batch 64 |
@@ -179,27 +209,39 @@ predicted as Cercospora leaf spot, two visually similar diseases (e.g. InvoLeaf 
 equally small validation set, so maize test F1 sits 2–4 points below validation F1 for
 ResNet and InvoLeaf.
 
-## Mechanism and interpretability (seed 42, `results/mechanism_seed42.json`)
+## Mechanism and interpretability (seed 42, `results/mechanism_seed42_black.json`)
 
-Caveat: this analysis was run before the occlusion issue was found, so its "occlusion"
-condition is the out-of-range noise patch; the colour-shift results are unaffected. A
-black-patch re-run (`python scripts/analyze_mechanism.py`, which now defaults to
-`--occlusion erasing_black` and writes `results/mechanism_seed42_black.json`) replaces
-the occlusion panels of figures 8–10; until it exists, those panels show the noise patch
-and say so in their titles.
+Inference only, on 300 test images with the same seeded corruptions as the evaluation;
+occlusion and combined use the black patch. "Drift" is the relative change of a feature
+against the clean image; "flips" are predictions that change.
 
-- **The kernels are not the weak point.** Under every corruption, InvoLeaf's generated
-  kernels change about 5× less than their inputs; colour shift moves them least (0.083
-  relative change). Our prediction that content-generated kernels would amplify colour
-  shifts was wrong.
-- **Under colour shift InvoLeaf's features move as much as ViT-B's (0.33 vs 0.31), but
-  its predictions flip 3× as often (15% vs 5%)**: its classes sit closer together, so the
-  same disturbance crosses a decision boundary more often. Why is not established.
-- **fig9** shows where kernels mix neighbours (mostly background and leaf edges; leaf
-  interiors stay close to identity). **fig10** shows feature drift per block for ViT-B and
-  InvoLeaf. **fig8** (Grad-CAM) is informative for ResNet; last-block Grad-CAM on ViTs is
-  diffuse and speckled over the background, a known weakness of the method for
-  transformers, so do not over-interpret those columns.
+| Model | Colour: final-feature drift / flips | Occlusion: drift / flips | Occlusion damage outside the box (mean over blocks) |
+|---|---|---|---|
+| ResNet-50 | 0.68 / 12% | 0.49 / 1% | 0.29 |
+| ViT-B/16 | 0.31 / 5% | 0.33 / 0% | 0.27 |
+| InvoLeaf | 0.33 / 15% | **0.23 / 4%** | **0.23** |
+
+- **InvoLeaf's features are as stable as ViT-B's, or more, but its predictions flip
+  more.** Under colour shift the features move as much as ViT-B's but 3× as many
+  predictions change; under occlusion they move *less* (and the damage spreads least
+  outside the box, fig10), yet 4% of predictions change against ViT-B's 0%. The same
+  pattern under both corruptions suggests InvoLeaf's classes sit closer together, so a
+  smaller disturbance crosses a decision boundary. This is an interpretation, not tested.
+- **The kernels are not the weak point.** They change about 5× less than their inputs
+  under every corruption, least under colour shift (0.083). Under occlusion they change
+  4.7× more inside the box than outside (0.229 vs 0.049): involution keeps the effect
+  local. Our prediction that content-generated kernels would amplify colour shifts was
+  wrong.
+- **fig9** shows where the kernels mix neighbours: mostly background and leaf edges; leaf
+  interiors and the uniform black patch stay close to identity. **fig8** (Grad-CAM) is
+  informative for ResNet; last-block Grad-CAM on ViTs is diffuse and speckled over the
+  background, a known weakness of the method for transformers, so do not over-interpret
+  those columns.
+- The first version of this analysis (`results/mechanism_seed42.json`) used the
+  out-of-range noise patch. It produced two effects that disappear with the black patch:
+  a 47× blow-up of ResNet's features (0.49 with the black patch), and kernels inside the
+  box switching to heavy neighbour mixing (0.45 of their weight off-centre; with the
+  black patch 0.09, below the clean value of 0.16). Neither should be cited.
 
 ## What to claim, and what not to
 
