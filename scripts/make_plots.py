@@ -57,9 +57,12 @@ MODELS = {
     "abl_s16_k3":       dict(label="InvoLeaf-S, K=3",  color=K_RAMP[3], marker="s"),
     "abl_s16_k5":       dict(label="InvoLeaf-S, K=5",  color=K_RAMP[5], marker="s"),
     "abl_s16_k7":       dict(label="InvoLeaf-S, K=7",  color=K_RAMP[7], marker="s"),
+    # The control arm is neutral grey: same slot, static kernel instead of involution.
+    "abl_spatial_dwconv": dict(label="Depthwise-conv control", color=INK_2, marker="D"),
 }
 B16_SET = ["involeaf_b16", "vit_b16_baseline", "agritl_vit", "resnet50"]
 S16_SET = ["vit_s16_baseline", "abl_s16_k3", "abl_s16_k5", "abl_s16_k7"]
+CONTROL_SET = ["vit_b16_baseline", "involeaf_b16", "abl_spatial_dwconv"]
 
 CONDITIONS = [
     ("Clean", lambda r: r["robustness"]["clean"]["accuracy"]),
@@ -470,6 +473,9 @@ def main() -> None:
                    "fig1_robustness_b16", out)
     fig_robustness(evals, S16_SET, "Kernel-size ablation on ViT-S/16",
                    "fig2_kernel_ablation_s16", out)
+    fig_robustness(evals, CONTROL_SET,
+                   "Control: involution vs a static 7x7 depthwise convolution in the same slot",
+                   "fig11_spatial_control", out)
     fig_tradeoff(evals, out)
     fig_lab_vs_field(evals, out)
     fig_params_vs_accuracy(evals, train, out)

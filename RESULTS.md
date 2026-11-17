@@ -4,7 +4,7 @@ Every number here is derived from `results/*.json` (regenerate with
 `python scripts/make_tables.py` → `results/tables.md`). Accuracy is test-set accuracy in %,
 reported as mean ± sample standard deviation over seeds 42, 43, 44 unless marked otherwise.
 Figures: `python scripts/make_plots.py` and `python scripts/plot_mechanism.py` write
-`results/figures/fig1…fig10` (PNG at 300 dpi, plus PDF).
+`results/figures/fig1…fig11` (PNG at 300 dpi, plus PDF).
 
 ## The result in one paragraph
 
@@ -18,7 +18,12 @@ AgriTL-ViT design, which fills the same slot with 1×1 convolutions and doubles 
 InvoLeaf is **better on every test in every seed** (colour +17, occlusion +10, combined
 +15, field +9 points) while using 35% fewer parameters and 36% fewer MACs. The robustness cost scales with the number of blocks that
 receive involution: with four blocks instead of twelve the model is about as robust as
-ViT-B, but saves only 8% of parameters. A second crop (maize) reproduces the same
+ViT-B, but saves only 8% of parameters. A control that puts a plain, static 7×7
+depthwise convolution in the same slot matches InvoLeaf on every realistic test
+(3 seeds) at lower cost, so the robustness cost comes from putting a local spatial
+operator plus a half-width FFN in place of the MLP. It is not specific to involution, and
+involution's content-generated kernels bring no measurable benefit over a fixed kernel in
+this setting. A second crop (maize) reproduces the same
 ordering. Along the way we found that a widely used occlusion test (random erasing with
 `value="random"`) produces out-of-range pixels and invents robustness differences; with a
 physically valid patch the effect disappears.
@@ -111,7 +116,13 @@ use, whichever architecture is used.
 | ViT-B/16 | 85.8M | 17.58 | 4.5 ms | 4.8 GB |
 | **InvoLeaf** | 64.7M | 13.50 | 10.4 ms | 29.5 GB (`unfold`; ~6.9 GB with `shift`) |
 | InvoLeaf, K=3 | 60.3M | 12.57 | – | – |
+| Depthwise-conv control | 57.9M | ≈12.1† | – | 4.3 GB‡ |
 | AgriTL-ViT | 100.0M | 21.10 | 12.7 ms | 8.0 GB |
+
+† Analytic estimate (InvoLeaf minus the kernel-generating layers, plus the 7×7
+depthwise convolution), not yet counted by `benchmark.py --flops-only`.
+‡ From the training logs (InvoLeaf's training logs give 30.0 GB on the same
+measurement). Training time per run: control 22 min, InvoLeaf 45 min, ViT-B 13 min.
 
 GMACs (multiply-accumulates, the unit usually reported as "FLOPs" for ViTs) count
 fvcore's total plus two terms it cannot see: the attention matrix products and the
@@ -152,17 +163,18 @@ transformers are not affected by in-range noise at all.
 
 | Variant | Params | Clean | Colour | Occlusion | Combined | Field |
 |---|---|---|---|---|---|---|
-| `pure` (involution only, no FFN) | 36.4M | 98.5 | 62.3 | 83.0* | 41.6* | 21.4 |
+| `pure` (involution only, no FFN) | 36.4M | 98.5 | 62.5 | 84.4 | 41.4 | 21.6 |
 | `inv_ffn` (InvoLeaf) | 64.7M | 99.9 | 87.7 | 97.4 | 61.0 | 28.3 |
 | `parallel` (full FFN + involution beside it) | 93.0M | 99.8 | 90.6 | 98.1 | 68.5 | 26.1 |
 
-\* 2 seeds. Removing the FFN entirely breaks the model, so channel mixing is essential.
+Removing the FFN entirely breaks the model, so channel mixing is essential.
 Adding involution beside the full pretrained FFN costs robustness too (field 26 vs ViT-B
 36), so the loss comes from involution in the residual stream, not only from narrowing
 the FFN.
 
-**Kernel size (ViT-S/16, 3 seeds).** K=3, 5, 7 are indistinguishable (colour 82.7 / 83.1 /
-82.0, field 32.4 / 32.2 / 31.3), all below plain ViT-S (colour 90.3, field 37.3). The same
+**Kernel size (ViT-S/16, 3 seeds).** K=3, 5, 7 are indistinguishable (colour 82.6 / 82.6 /
+81.5, combined 55.2 / 57.5 / 55.2, field 31.9 / 32.1 / 31.6), all below plain ViT-S
+(colour 90.3, combined 78.4, field 37.3). The same
 holds at ViT-B size (seed 42): K=3 gives colour 88.4, combined 60.7, field 27.9, against
 87.1 / 57.6 / 26.4 for K=7, with 60.3M parameters and 2.4× faster training (19 vs 45 min).
 **K=3 is the better choice: same robustness, lower cost.**
@@ -185,6 +197,35 @@ a tuned model.
 but trains at the new-module rate (1e-4), ten times the rate of ViT-B's MLP. Keeping it at
 the pretrained rate does not recover robustness (colour 85.7, blur 86.2, combined 54.6,
 field 29.8). The gap is architectural.
+
+**Is it involution itself? Depthwise-convolution control (ViT-B, 3 seeds).** The same
+model as InvoLeaf (all 12 blocks, FFN_r2 after the spatial operator, identity at step 0,
+same learning rates), with involution replaced by a fixed 7×7 depthwise convolution.
+Planned as a control after the main results; not used to choose or tune anything.
+
+| Model | Params | Clean | Colour | Blur | Occlusion | In-range noise | Combined | 128 px | Field | Field F1 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ViT-B/16 | 85.8M | 99.9 | 93.8 ± 0.1 | 97.2 ± 0.8 | 98.5 ± 0.7 | 99.2 ± 0.2 | 72.4 ± 3.8 | 98.7 ± 0.2 | 35.9 ± 3.6 | 0.241 |
+| InvoLeaf | 64.7M | 99.9 | 87.7 ± 0.6 | 93.6 ± 1.1 | 97.4 ± 1.1 | 96.0 ± 2.5 | 61.0 ± 3.5 | 96.4 ± 0.6 | 28.3 ± 1.9 | 0.189 |
+| Depthwise-conv control | 57.9M | 99.8 | 87.9 ± 1.3 | 93.9 ± 2.8 | 97.8 ± 1.0 | 86.0 ± 14.1 | 58.0 ± 3.5 | 96.7 ± 1.5 | 27.7 ± 1.0 | 0.185 |
+
+Per seed (42 / 43 / 44), control minus InvoLeaf: colour +0.6 / −1.5 / +1.4, blur
++1.5 / −1.6 / +1.1, occlusion +2.8 / −1.1 / −0.7, combined +3.2 / −6.8 / −5.3, field
++0.5 / −0.9 / −1.5. The sign flips between seeds on every test, so on these the two are
+indistinguishable. Control minus ViT-B is negative in all three seeds on colour, blur,
+combined, 128 px and field, the same pattern as InvoLeaf. The one test where they differ
+is in-range noise: the control drops on two seeds (98.1 / 70.5 / 89.3; on seed 43, 35% of
+images go to Early blight), whereas InvoLeaf stays at 93–98. Involution may be steadier
+against noise texture than a fixed kernel, but three seeds with this much spread are
+not enough to claim it.
+
+The conclusion: **any local spatial operator in the FFN slot, followed by a half-width
+FFN, costs the same robustness against ViT-B.** The cost does not come from involution's
+content-generated kernels, and those kernels give no measurable gain over a static
+kernel here. The control is also cheaper (57.9M parameters, half InvoLeaf's training
+time, 4.3 GB training memory against 30 GB), because depthwise convolution is a standard,
+fused GPU operation. We have not benchmarked its latency; we predict it is close to
+ViT-B's. **fig11** shows the three models side by side.
 
 **Dead last block.** In the last block the CLS token skips involution and no later block
 carries patch information back to it, so no gradient reaches that block's involution; its
@@ -248,10 +289,14 @@ against the clean image; "flips" are predictions that change.
 Claim:
 - InvoLeaf matches ViT-B clean accuracy at 25% fewer parameters and 23% fewer MACs.
 - InvoLeaf beats AgriTL-ViT on accuracy, every robustness test and cost; 1×1 convolutions
-  cannot mix spatial information, involution can, and it shows.
+  cannot mix spatial information, while involution (and, per the control, a depthwise
+  convolution) can.
 - Involution costs robustness relative to plain ViT-B (colour, blur, combined, low
   resolution, field: worse in all three seeds); the cost grows with the number of
   involution blocks and is not explained by the learning rate.
+- A static depthwise convolution in the same slot gives the same robustness at lower
+  cost, so the cost belongs to the design (local operator + half-width FFN in place of
+  the MLP), not to involution specifically.
 - On occlusion, InvoLeaf and ViT-B are statistically indistinguishable.
 - Kernel size does not matter; K=3 is the efficient choice.
 - The out-of-range occlusion test creates false robustness results.
@@ -263,6 +308,8 @@ Do not claim:
 - That ResNet-50 collapses under occlusion: with a black patch it does not; only
   noise-textured patches hurt it (badly on maize, mildly on tomato).
 - That InvoLeaf is faster (it is slower in wall-clock time).
+- That involution's content-generated kernels help, or that they cause the robustness
+  loss: the depthwise-conv control rules out both on our tests.
 - Any number from `results/superseded/` (the first `parallel` run started from a
   perturbed initialisation; fixed and rerun).
 
@@ -274,8 +321,14 @@ Do not claim:
 - `vit_b16_baseline` seed 42 was paused after epoch 8 and resumed from its full saved
   state (weights, optimiser, scheduler, random-number streams); every other run trained
   in one go.
-- The seed-42 ViT-S kernel-ablation runs predate the in-range occlusion tests, so those
-  columns average seeds 43 and 44 only.
+- There is no "half-width FFN with no spatial operator" run, so the cost of narrowing the
+  FFN cannot be separated from the cost of adding a spatial operator. `parallel` (full FFN
+  plus involution) also loses field accuracy, which points at the spatial operator, but
+  that is one indirect data point.
+- The depthwise-conv control's latency and exact MACs were not benchmarked.
+- The seed-42 ViT-S kernel-ablation runs and `pure` seed 43 were retrained on Nov 17 to
+  get the in-range occlusion tests (their checkpoints had been deleted); their other
+  numbers moved by a few tenths, like the other retrains.
 - Retrained ResNet-50 and InvoLeaf runs are reproducible only to a few tenths of a point
   (non-deterministic GPU kernels); ViT-B and AgriTL-ViT reproduce exactly.
 - Weight decay is also applied to the new modules' biases and normalisation weights,

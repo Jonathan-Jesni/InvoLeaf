@@ -45,6 +45,7 @@ FLOPS_SET = DEFAULT_SET + [
     "configs/ablations/variant_parallel.yaml",
     "configs/ablations/placement_first11.yaml",
     "configs/ablations/kernel_k3.yaml",
+    "configs/ablations/spatial_dwconv.yaml",
 ]
 
 

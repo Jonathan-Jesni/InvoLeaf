@@ -35,6 +35,12 @@ On PlantVillage tomato (18,160 images, 3 seeds), with corruptions applied at tes
   parameters (single seed).
   It is not a learning-rate effect, and kernel size does not matter (K=3 ≈ K=7, and K=3
   is 2.4× cheaper to train).
+- **The cost is not specific to involution.** A control with a fixed 7×7 depthwise
+  convolution in the same slot (3 seeds) matches InvoLeaf on every realistic test
+  (colour 87.9, occlusion 97.8, combined 58.0, field 27.7) with 57.9M parameters and half
+  the training time. Involution's content-generated kernels bring no measurable benefit
+  over a static kernel here; what costs robustness is replacing the MLP with a local
+  operator plus a half-width FFN.
 - **A common occlusion test invents robustness differences.** `RandomErasing(value=
   "random")` before normalisation fills the box with values far outside the valid pixel
   range. Under it, InvoLeaf looked 10 points more robust than ViT-B and ResNet-50 sent
@@ -62,6 +68,7 @@ mixing. Three variants test this:
 | `pure` | `x + Inv(norm2(x))` | 36.4M | Breaks robustness (colour 62%): channel mixing is essential |
 | **`inv_ffn`** (InvoLeaf) | `x + FFN_r2(Inv(norm2(x)))` | **64.7M** | Primary model |
 | `parallel` | `x + FFN_r4(norm2(x)) + Inv(norm2(x))` | 93.0M | Capacity control; still less robust than ViT-B |
+| `spatial_op: dwconv` | `x + FFN_r2(DWConv7x7(norm2(x)))` | 57.9M | Operator control; same robustness as InvoLeaf |
 
 ### Engineering details
 
@@ -175,6 +182,8 @@ python -m pytest
 - PlantVillage contains several photos of each leaf, so a random split can put the same
   leaf in training and test; clean accuracy is optimistic for every model.
 - The placement, learning-rate and ViT-B K=3 ablations are single-seed.
+- No run isolates narrowing the FFN from adding the spatial operator; the
+  depthwise-conv control's latency was not benchmarked.
 - AgriTL-ViT is reproduced from the paper's text; the exact wiring is our interpretation
   (documented in `involeaf/models/agritl_vit.py`). It reaches 99.3% on tomato and 97.8% on
   maize, against the paper's 98.5% and 97.2%.
