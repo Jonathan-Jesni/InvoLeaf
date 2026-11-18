@@ -57,7 +57,7 @@ physically valid patch the effect disappears.
 
 | Model | Params | Clean | Colour | Blur | Occlusion | Combined | 128 px | Field (PlantDoc) |
 |---|---|---|---|---|---|---|---|---|
-| ViT-B/16 | 85.8M | 99.9 ± 0.0 | **93.8 ± 0.1** | **97.2 ± 0.8** | **98.5 ± 0.7** | **72.4 ± 3.8** | **98.7 ± 0.2** | **35.9 ± 3.6** |
+| ViT-B/16 | 85.8M | 99.9 ± 0.0 | **93.8 ± 0.1** | **97.2 ± 0.8** | **98.5 ± 0.7** | **72.4 ± 3.8** | **98.7 ± 0.1** | **35.9 ± 3.6** |
 | **InvoLeaf** | 64.7M | 99.9 ± 0.1 | 87.7 ± 0.6 | 93.6 ± 1.1 | 97.4 ± 1.1 | 61.0 ± 3.5 | 96.4 ± 0.6 | 28.3 ± 1.9 |
 | ResNet-50 | 23.5M | 99.4 ± 0.1 | 89.2 ± 0.2 | 74.1 ± 2.2 | 98.3 ± 0.1 | 59.1 ± 1.9 | 84.4 ± 2.8 | 34.0 ± 0.5 |
 | AgriTL-ViT | 100.0M | 99.3 ± 0.2 | 71.0 ± 1.5 | 89.9 ± 0.4 | 87.7 ± 0.5 | 46.2 ± 2.4 | 91.9 ± 1.0 | 18.9 ± 0.8 |
@@ -89,7 +89,7 @@ field images classified correctly):
 
 | Class (field images) | ViT-B | InvoLeaf | ResNet-50 | AgriTL-ViT |
 |---|---|---|---|---|
-| Late blight (111) | **0.96** | 0.58 | 0.78 | 0.78 |
+| Late blight (111) | **0.96** | 0.58 | 0.78 | 0.77 |
 | Early blight (88) | 0.44 | **0.76** | 0.60 | 0.27 |
 | Septoria leaf spot (151) | 0.45 | 0.31 | **0.56** | 0.07 |
 | Yellow leaf curl virus (76) | **0.35** | 0.21 | 0.19 | 0.15 |
@@ -203,7 +203,7 @@ Planned as a control after the main results; not used to choose or tune anything
 
 | Model | Params | Clean | Colour | Blur | Occlusion | In-range noise | Combined | 128 px | Field | Field F1 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ViT-B/16 | 85.8M | 99.9 | 93.8 ± 0.1 | 97.2 ± 0.8 | 98.5 ± 0.7 | 99.2 ± 0.2 | 72.4 ± 3.8 | 98.7 ± 0.2 | 35.9 ± 3.6 | 0.241 |
+| ViT-B/16 | 85.8M | 99.9 | 93.8 ± 0.1 | 97.2 ± 0.8 | 98.5 ± 0.7 | 99.2 ± 0.2 | 72.4 ± 3.8 | 98.7 ± 0.1 | 35.9 ± 3.6 | 0.241 |
 | InvoLeaf | 64.7M | 99.9 | 87.7 ± 0.6 | 93.6 ± 1.1 | 97.4 ± 1.1 | 96.0 ± 2.5 | 61.0 ± 3.5 | 96.4 ± 0.6 | 28.3 ± 1.9 | 0.189 |
 | Depthwise-conv control | 57.9M | 99.8 | 87.9 ± 1.3 | 93.9 ± 2.8 | 97.8 ± 1.0 | 86.0 ± 14.1 | 58.0 ± 3.5 | 96.7 ± 1.5 | 27.7 ± 1.0 | 0.185 |
 
@@ -257,13 +257,13 @@ against the clean image; "flips" are predictions that change.
 | Model | Colour: final-feature drift / flips | Occlusion: drift / flips | Occlusion damage outside the box (mean over blocks) |
 |---|---|---|---|
 | ResNet-50 | 0.68 / 12% | 0.49 / 1% | 0.29 |
-| ViT-B/16 | 0.31 / 5% | 0.33 / 0% | 0.27 |
+| ViT-B/16 | 0.31 / 5% | 0.33 / 0.3% | 0.27 |
 | InvoLeaf | 0.33 / 15% | **0.23 / 4%** | **0.23** |
 
 - **InvoLeaf's features are as stable as ViT-B's, or more, but its predictions flip
   more.** Under colour shift the features move as much as ViT-B's but 3× as many
   predictions change; under occlusion they move *less* (and the damage spreads least
-  outside the box, fig10), yet 4% of predictions change against ViT-B's 0%. The same
+  outside the box, fig10), yet 4% of predictions change against ViT-B's 0.3% (1 of 300 images). The same
   pattern under both corruptions suggests InvoLeaf's classes sit closer together, so a
   smaller disturbance crosses a decision boundary. This is an interpretation, not tested.
 - **The kernels are not the weak point.** They change about 5× less than their inputs
