@@ -170,16 +170,18 @@ K_MODELS = ("abl_s16_k3", "abl_s16_k5", "abl_s16_k7")
 
 
 def _label_points(ax, pts: dict[str, tuple[float, float]], offset=(8, 6),
-                  k_above: bool = False) -> None:
+                  k_above: bool = False, overrides: dict | None = None) -> None:
     """Direct labels, one per model, except the three kernel sizes.
 
     The K=3/5/7 runs land almost on top of each other, so separate labels collide.
     They get one shared label beside the cluster; their shades are told apart in the
     kernel-ablation figure.
     """
+    overrides = overrides or {}
     for m, (x, y) in pts.items():
         if m not in K_MODELS:
-            ax.annotate(MODELS[m]["label"], (x, y), xytext=offset,
+            dx, dy, ha, va = overrides.get(m, (*offset, "left", "baseline"))
+            ax.annotate(MODELS[m]["label"], (x, y), xytext=(dx, dy), ha=ha, va=va,
                         textcoords="offset points", fontsize=8.5, color=INK_2)
     ks = [pts[m] for m in K_MODELS if m in pts]
     if not ks:
@@ -281,7 +283,11 @@ def fig_tradeoff(evals, out: Path) -> None:
                                         shrinkA=7, shrinkB=9))
     for m, (x, y, xe, ye) in pts.items():
         _point(ax, x, y, xe, ye, m)
-    _label_points(ax, {m: p[:2] for m, p in pts.items()})
+    # InvoLeaf and the depthwise-conv control land side by side: label one below-left,
+    # the other below-right, so neither runs into the other.
+    _label_points(ax, {m: p[:2] for m, p in pts.items()},
+                  overrides={"involeaf_b16": (-8, -6, "right", "top"),
+                             "abl_spatial_dwconv": (8, -6, "left", "top")})
     ax.set_xlabel("Accuracy under occlusion, black patch (%)")
     ax.set_ylabel("Accuracy under colour shift (%)")
     ax.set_title("Occlusion vs colour-shift robustness")
@@ -357,7 +363,8 @@ def fig_params_vs_accuracy(evals, train, out: Path) -> None:
         _point(ax, params, acc * 100, 0, sd * 100, m)
     # In this figure ViT-S sits just right of the kernel cluster, so its label goes above.
     _label_points(ax, {m: (params, acc * 100) for m, params, (acc, _, _) in pts},
-                  offset=(8, -3), k_above=True)
+                  offset=(8, -3), k_above=True,
+                  overrides={"abl_spatial_dwconv": (-10, -3, "right", "baseline")})
     ax.set_xlabel("Parameters (millions)")
     ax.set_ylabel("Clean test accuracy (%)")
     ax.set_title("Model size vs clean accuracy")
